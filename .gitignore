@@ -31,3 +31,7 @@ google-services.json
 
 # Android Profiling
 *.hprof
+/repo_.dart
+/page_.dart
+/local.properties
+/command_.dart

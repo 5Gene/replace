@@ -1,0 +1,38 @@
+#https://github.com/terrakok/kmp-awesome
+
+[versions]
+cartoon = "2023.06.22"
+cubic = "2023.04.11"
+viewDsl = "2023.12.08"
+adapter = "2023.10.13"
+spark = "2023.12.08"
+conventions = "2.0.9"
+auto-service = "0.0.6"
+surery = "2024.06.06"
+
+[libraries]
+auto-service = { module = "io.github.5hmla:auto-service", version.ref = "auto-service" }
+sparkj-spark = { module = "osp.sparkj.ui:spark", version.ref = "spark" }
+sparkj-cartoon = { module = "osp.sparkj.ui:cartoon", version.ref = "cartoon" }
+sparkj-cubic = { module = "osp.sparkj.ui:cubic", version.ref = "cubic" }
+sparkj-view-dsl = { module = "osp.sparkj.ui:view-dsl", version.ref = "viewDsl" }
+sparkj-adapter = { module = "osp.sparkj.ui:adapter", version.ref = "adapter" }
+
+
+[bundles]
+sparkj = ["sparkj-view-dsl", "sparkj-cubic", "sparkj-cartoon"]
+
+[plugins]
+compose = { id = "io.github.5hmlA.android.compose", version.ref = "conventions" }
+android = { id = "io.github.5hmlA.android", version.ref = "conventions" }
+protobuf = { id = "io.github.5hmlA.protobuf", version.ref = "conventions" }
+knife = { id = "io.github.5hmlA.knife", version.ref = "conventions" }
+
+#需要手动配置 才可以使用
+#dependencyResolutionManagement {
+#    versionCatalogs {
+#        create("wings") {
+#            from(files("gradle/wings.versions.toml"))
+#        }
+#    }
+#}

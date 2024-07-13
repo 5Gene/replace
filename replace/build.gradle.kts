@@ -56,8 +56,8 @@ dependencies {
 }
 
 //group = "osp.sparkj.plugin"
-group = "io.github.Replace"
-version = "2.0.6"
+group = "io.github.zgenes"
+version = "0.0.1"
 
 publishing {
     repositories {
@@ -94,77 +94,20 @@ tasks.findByName("publishPlugins")?.doFirst {
 }
 
 gradlePlugin {
+    website = "https://github.com/zzgene/replace"
+    vcsUrl = "https://github.com/zzgene/replace"
     plugins {
-        create("allProjectsApkActionSettings") {
-            id = "android.recipes.all_projects_apk_action"
-            implementationClass = "CustomSettings"
+        register("aar-replace") {
+            id = "${group}.replace"
+            displayName = "aar replace module plugin"
+            description = "android build common config for build.gradle, this will auto add android necessary dependencies"
+            tags = listOf("aar", "android", "convention")
+            implementationClass = "ReplaceSettings"
         }
     }
-}
 
-//gradlePlugin {
-//    website = "https://github.com/5hmlA/conventions"
-//    vcsUrl = "https://github.com/5hmlA/conventions"
-//    plugins {
-//        register("android-config") {
-//            id = "${group}.android"
-//            displayName = "android config plugin"
-//            description = "android build common config for build.gradle, this will auto add android necessary dependencies"
-//            tags = listOf("config", "android", "convention")
-//            implementationClass = "AndroidConfig"
-//        }
-//        register("android-compose") {
-//            id = "${group}.android.compose"
-//            displayName = "android compose config plugin"
-//            description = "android compose config for build.gradle, necessary related settings for compose will be automatically set"
-//            tags = listOf("compose", "config", "android", "convention")
-//            implementationClass = "AndroidComposeConfig"
-//        }
-//        register("protobuf-config") {
-//            id = "${group}.protobuf"
-//            displayName = "protobuf config plugin"
-//            description =
-//                "protobuf config for any gradle project, necessary configuration and dependencies will be automatically set up"
-//            tags = listOf("protobuf", "config", "convention")
-//            implementationClass = "ProtobufConfig"
-//        }
-//        register("agp-knife") {
-//            id = "${group}.knife"
-//            displayName = "agp knife plugin"
-//            description = "Simplify the use of complex agp api and isolate the differences between different agp versions"
-//            tags = listOf("android gradle plugin", "knife", "convention")
-//            implementationClass = "AGPKnifePlugin"
-//        }
-//
-////        因为xxx.gradle.kts注册插件的时候不会设置displayName 尝试这里覆盖注册，结果无效，
-////        publishTask里会检测所有的plugin,被认为是重复注册了直接报错,所以同一个plugin再创建个id
-//        create("proto-convention") {
-//            id = "${group}.protobuf-convention"
-//            displayName = "protobuf convention plugin"
-//            description =
-//                "protobuf convention for any gradle project, necessary configuration and dependencies will be automatically set up"
-//            tags = listOf("protobuf", "config", "convention")
-//            implementationClass = "ProtobufConventionPlugin"
-//        }
-//
-//    }
-//    //因为通过 xxx.gradle.kts创建的预编译脚本 会自动创建plugin但是没设置displayName和description
-//    //所以这里判断补充必要数据否则发布不了，执行 [plugin portal -> publishPlugins]的时候会报错
-//    val plugins = extensions.getByType<GradlePluginDevelopmentExtension>().plugins
-////    这里不修改 上传的时候再处理
-////    plugins.forEach {
-////        if (it.displayName.isNullOrEmpty()) {
-////            it.id = "$group.${it.id}"
-////            it.displayName = "protobuf convention plugin"
-////            it.description = "protobuf convention for any gradle project, necessary configuration and dependencies will be automatically set up"
-////            it.tags = listOf("protobuf", "config", "convention")
-////        }
-////    }
-//    plugins.forEach {
-//        "- plugin -- ${it.name} ${it.id} ${it.displayName}".print()
-//    }
-//    "插件地址: https://plugins.gradle.org/u/ZuYun".print()
-////    https://plugins.gradle.org/docs/mirroring
-////    The URL to mirror is https://plugins.gradle.org/m2/
-//    "插件下载地址: https://plugins.gradle.org/m2/".print()
-//}
+    "插件地址: https://plugins.gradle.org/u/ZuYun".print()
+//    https://plugins.gradle.org/docs/mirroring
+//    The URL to mirror is https://plugins.gradle.org/m2/
+    "插件下载地址: https://plugins.gradle.org/m2/".print()
+}

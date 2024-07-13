@@ -13,10 +13,9 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-import org.gradle.api.Plugin
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.file.Directory
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
@@ -38,7 +37,7 @@ abstract class AllProjectsApkTask: DefaultTask() {
         // inputDirectories contains a list of directories.
         //
         // Each directory contains the APKs for a particular module. We only
-        // selected the RELEASE variant (see the CustomSettings.kt for the
+        // selected the RELEASE variant (see the ReplaceSettings.kt for the
         // variant selection).
         inputDirectories.get()
             .forEach {

@@ -1,7 +1,7 @@
 rootProject.name = "Replace-main"
 
 pluginManagement {
-    includeBuild("replace"){
+    includeBuild("replace") {
         name = "convention"
     }
     repositories {
@@ -27,7 +27,7 @@ dependencyResolutionManagement {
     }
 }
 plugins {
-    id("android.recipes.all_projects_apk_action")
+    id("io.github.zgenes.replace")
 }
 //includeBuild("$rootPath/$name") {
 //	dependencySubstitution {
@@ -35,9 +35,9 @@ plugins {
 //	}
 //}
 
-replace{
-    excludes(
-        "app"
+replace {
+    srcProject(
+        ":feature:home"
     )
 }
 
@@ -45,7 +45,7 @@ include(":app")
 include(":basic:helpers")
 include(":feature:home")
 include(":basic:uikit")
-//include(":feature:media")
-//include(":feature:profile")
+include(":feature:media")
+include(":feature:profile")
 include(":replace")
 include(":kt")

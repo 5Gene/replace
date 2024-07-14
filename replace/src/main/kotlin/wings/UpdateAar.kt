@@ -2,9 +2,14 @@ package wings
 
 import org.gradle.api.Project
 
-fun gitUpdateTask(rootProject: Project) {
-    rootProject.tasks.register("replaceUpdate") {
-        group = "git update"
+fun replaceRootTask(rootProject: Project) {
+    gitUpdateTask(rootProject)
+    gitCleanTask(rootProject)
+}
+
+private fun gitUpdateTask(rootProject: Project) {
+    rootProject.tasks.register("gitUpdate") {
+        group = "replace"
         doLast {
             //通过git指令判断和远端最新代码相比哪些文件有修改
             val diffFiles = diffWithHead()
@@ -12,6 +17,15 @@ fun gitUpdateTask(rootProject: Project) {
             //执行git命令更新代码，可能有冲突
             println(diffFiles)
             println("git pull".exec())
+        }
+    }
+}
+
+private fun gitCleanTask(rootProject: Project) {
+    rootProject.tasks.register("cleanLocalMaven") {
+        group = "replace"
+        doLast {
+            rootProject.rootDir.toLocalRepoDirectory().deleteRecursively()
         }
     }
 }

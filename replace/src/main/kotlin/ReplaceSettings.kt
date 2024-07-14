@@ -22,7 +22,6 @@ import org.gradle.api.internal.project.DefaultProject
 import wings.addLocalMaven
 import wings.blue
 import wings.collectLocalMaven
-import wings.gitUpdateTask
 import wings.ignoreReplace
 import wings.implementationToCompileOnly
 import wings.isAndroidApplication
@@ -30,6 +29,7 @@ import wings.isRootProject
 import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
+import wings.replaceRootTask
 import wings.yellow
 
 abstract class ReplaceExtension {
@@ -60,7 +60,7 @@ class ReplaceSettings : Plugin<Settings> {
                 if (project.ignoreReplace()) {
                     println("afterEvaluate -> project: 【${project.name}】ignore".yellow)
                     if (project.isRootProject()) {
-                        gitUpdateTask(project)
+                        replaceRootTask(project)
                         localMaven = settings.rootDir.collectLocalMaven()
                         println(
                             "【${project.name}】localMaven size:${localMaven.size} ${

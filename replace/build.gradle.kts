@@ -94,8 +94,8 @@ tasks.findByName("publishPlugins")?.doFirst {
 }
 
 gradlePlugin {
-    website = "https://github.com/zzgene/replace"
-    vcsUrl = "https://github.com/zzgene/replace"
+    website = "https://github.com/5hmlA/replace"
+    vcsUrl = "https://github.com/5hmlA/replace"
     plugins {
         register("aar-replace") {
             id = "${group}.replace"

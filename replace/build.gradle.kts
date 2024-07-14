@@ -100,8 +100,8 @@ gradlePlugin {
         register("aar-replace") {
             id = "${group}.replace"
             displayName = "aar replace module plugin"
-            description = "android build common config for build.gradle, this will auto add android necessary dependencies"
-            tags = listOf("aar", "android", "convention")
+            description = "significantly reducing the compilation time"
+            tags = listOf("aar", "LocalMaven")
             implementationClass = "ReplaceSettings"
         }
     }

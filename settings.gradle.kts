@@ -27,7 +27,7 @@ dependencyResolutionManagement {
     }
 }
 plugins {
-    id("io.github.zgenes.replace")
+    id("io.github.5hmlA.replace")
 }
 //includeBuild("$rootPath/$name") {
 //	dependencySubstitution {

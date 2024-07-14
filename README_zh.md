@@ -9,7 +9,7 @@
 - 在你项目的settings.gradle.kts引入插件
     ```kotlin
     plugins {
-        id("io.github.zgenes.replace")
+        id("io.github.5hmlA.replace")
     }
     ```
 - 配置你关注的模块以源码的方式参与编译。

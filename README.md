@@ -14,7 +14,7 @@ Introduce the plugin in your project's settings.gradle.kts:
 
   ```kotlin
   plugins {
-    id("io.github.zgenes.replace")
+    id("io.github.5hmlA.replace")
 }
   ```
 

@@ -56,7 +56,7 @@ dependencies {
 }
 
 //group = "osp.sparkj.plugin"
-group = "io.github.zgenes"
+group = "io.github.5hmlA"
 version = "0.0.1"
 
 publishing {

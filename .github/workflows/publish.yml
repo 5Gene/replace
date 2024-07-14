@@ -32,18 +32,6 @@ jobs:
           java-version: '18'
           distribution: 'temurin'
 
-
-      - name: 🔪 Create key=value to gradle.properties
-        run: |
-          echo 🔪 Create key=value to gradle.properties
-          java --version
-          echo "gradle.publish.key=${{ secrets.GRADLE_KEY }}" >> gradle.properties
-          echo "gradle.publish.secret=${{ secrets.GRADLE_SECRET }}" >> gradle.properties
-          echo "mavenCentralUsername=${{ secrets.MAVEN_NAME }}" >> gradle.properties
-          echo "mavenCentralPassword=${{ secrets.MAVEN_PASSWORD }}" >> gradle.properties
-          echo "📸 Reading gradle.properties..."
-          cat gradle.properties
-
       # Runs a single command using the runners shell
       - name: 🔥 publishing plugin
         run: |

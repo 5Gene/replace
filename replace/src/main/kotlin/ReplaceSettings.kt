@@ -106,7 +106,7 @@ class ReplaceSettings : Plugin<Settings> {
 
                     //配置发布aar任务先于preBuild
                     val publishTask = project.tasks.getByName("publishSparkPublicationToAarRepository")
-                    val firstBuildTask = project.tasks.findByName("preBuild") ?: project.tasks.getByName("compileKotlin") ?: project.tasks.getByName("compileJava")
+                    val firstBuildTask = project.tasks.findByName("preBuild") ?: project.tasks.findByName("compileKotlin") ?: project.tasks.getByName("compileJava")
                     println("${project.name} firstBuildTask -> $firstBuildTask")
                     firstBuildTask.finalizedBy(publishTask)
                 }

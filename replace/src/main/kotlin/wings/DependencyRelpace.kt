@@ -119,9 +119,12 @@ fun Configuration.projectToModuleInDependency2(project: Project) {
     }
 }
 
-fun File.toLocalRepoDirectory() = File(this, "aars")
+fun Project.toLocalRepoDirectory() = File(rootDir, "build/aars")
 
-fun File.collectLocalMaven(): Map<String, String> {
+fun Project.collectLocalMaven(): Map<String, String> {
+    if (!isRootProject()) {
+        throw RuntimeException("not root project")
+    }
     val map = mutableMapOf<String, String>()
     toLocalRepoDirectory().walk().filter { it.name.endsWith(".aar") }.forEach {
         val name = it.name.substring(0, it.name.indexOfFirst { it == '-' })
@@ -139,7 +142,7 @@ fun Project.addLocalMaven() {
     repositories {
         maven {
             name = "aar"
-            setUrl(rootDir.toLocalRepoDirectory().path)
+            setUrl(toLocalRepoDirectory().path)
         }
     }
 }
@@ -154,7 +157,7 @@ fun Project.publishAar() {
             repositories {
                 maven {
                     name = "aar"
-                    setUrl(rootDir.toLocalRepoDirectory().path)
+                    setUrl(toLocalRepoDirectory().path)
                 }
             }
             register("Spark", MavenPublication::class.java) {

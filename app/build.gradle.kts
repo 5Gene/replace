@@ -12,8 +12,8 @@ android {
 dependencies {
     implementation(replace(":feature:home"))
 //    implementation(replace(":feature:media"))
-    implementation(replace(":feature:media"))
+    implementation(project(":feature:media"))
 //    compileOnly(replace(":feature:profile"))
 //    implementation(replace(":feature:profile"))
-    implementation(replace(":feature:profile"))
+    implementation(project(":feature:profile"))
 }

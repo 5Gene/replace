@@ -30,7 +30,6 @@ import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
 import wings.replaceRootTask
-import wings.yellow
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -54,14 +53,20 @@ class ReplaceSettings : Plugin<Settings> {
     private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
+                if (localMaven.isNotEmpty()) {
+                    if (localMaven.keys.contains(project.name)) {
+                        val remove = project.rootProject.subprojects.remove(project)
+                        println("beforeEvaluate -> remove ${project}: $remove".blue)
+                    }
+                }
             }
 
             override fun afterEvaluate(project: Project, state: ProjectState) {
                 if (project.ignoreReplace()) {
-                    println("afterEvaluate -> project: 【${project.name}】ignore".yellow)
+                    println("afterEvaluate -> project: 【${project.name}】ignore".blue)
                     if (project.isRootProject()) {
                         replaceRootTask(project)
-                        localMaven = settings.rootDir.collectLocalMaven()
+                        localMaven = project.collectLocalMaven()
                         println(
                             "【${project.name}】localMaven size:${localMaven.size} ${
                                 localMaven.map { it }.joinToString("\n", "\n") {

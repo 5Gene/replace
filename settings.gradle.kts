@@ -2,7 +2,7 @@ rootProject.name = "Replace-main"
 
 pluginManagement {
     includeBuild("replace") {
-        name = "convention"
+        name = "conventions"
     }
     repositories {
         google()

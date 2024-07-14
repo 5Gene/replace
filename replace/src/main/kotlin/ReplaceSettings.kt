@@ -13,20 +13,20 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-import org.gradle.BuildListener
-import org.gradle.BuildResult
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.project.DefaultProject
-import org.gradle.api.invocation.Gradle
 import wings.addLocalMaven
+import wings.blue
 import wings.collectLocalMaven
+import wings.gitUpdateTask
 import wings.ignoreReplace
 import wings.implementationToCompileOnly
 import wings.isAndroidApplication
+import wings.isRootProject
 import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
@@ -48,15 +48,7 @@ class ReplaceSettings : Plugin<Settings> {
 
     override fun apply(settings: Settings) {
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
-//        gradleBuildListener(settings)
-        localMaven = settings.rootDir.collectLocalMaven()
-
         projectEvaluationListener(settings, replaceExtension)
-
-        settings.gradle.settingsEvaluated {
-            println("settingsEvaluated")
-        }
-
     }
 
     private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
@@ -67,6 +59,18 @@ class ReplaceSettings : Plugin<Settings> {
             override fun afterEvaluate(project: Project, state: ProjectState) {
                 if (project.ignoreReplace()) {
                     println("afterEvaluate -> project: 【${project.name}】ignore".yellow)
+                    if (project.isRootProject()) {
+                        gitUpdateTask(project)
+                        localMaven = settings.rootDir.collectLocalMaven()
+                        println(
+                            "【${project.name}】localMaven size:${localMaven.size} ${
+                                localMaven.map { it }.joinToString("\n", "\n") {
+                                    val projectName = "【${it.key}】"
+                                    "${projectName.padEnd(13, '-')}-> ${it.value}"
+                                }
+                            }".blue
+                        )
+                    }
                     return
                 }
                 //是否是源码依赖项目
@@ -109,25 +113,4 @@ class ReplaceSettings : Plugin<Settings> {
             }
         })
     }
-
-    private fun gradleBuildListener(settings: Settings) {
-        settings.gradle.addBuildListener(object : BuildListener {
-            override fun settingsEvaluated(settings: Settings) {
-                println("CustomSettings.settingsEvaluated -> settings = [${settings}]")
-            }
-
-            override fun projectsLoaded(gradle: Gradle) {
-                println("CustomSettings.projectsLoaded -> gradle = [${gradle}]")
-            }
-
-            override fun projectsEvaluated(gradle: Gradle) {
-                println("CustomSettings.projectsEvaluated -> gradle = [${gradle}]")
-            }
-
-            override fun buildFinished(result: BuildResult) {
-                println("CustomSettings.buildFinished -> result = [${result}]")
-            }
-        })
-    }
-
 }

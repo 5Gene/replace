@@ -6,3 +6,7 @@ plugins {
     alias(libs.plugins.compose) apply false
     alias(libs.plugins.kotlin.jvm) apply false
 }
+
+val clean by tasks.registering(Delete::class) {
+   delete(layout.buildDirectory)
+}

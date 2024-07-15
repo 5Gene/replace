@@ -29,6 +29,7 @@ dependencyResolutionManagement {
 plugins {
     id("io.github.5hmlA.replace")
 }
+
 //includeBuild("$rootPath/$name") {
 //	dependencySubstitution {
 //		substitute(module("$group:$name")).with(project(":"))
@@ -37,7 +38,8 @@ plugins {
 
 replace {
     srcProject(
-        ":feature:home"
+//        ":feature:home"
+        ":basic:uikit"
     )
 }
 
@@ -47,5 +49,4 @@ include(":feature:home")
 include(":basic:uikit")
 include(":feature:media")
 include(":feature:profile")
-include(":replace")
 include(":kt")

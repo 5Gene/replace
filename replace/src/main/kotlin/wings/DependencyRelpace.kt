@@ -4,8 +4,10 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.initialization.Settings
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.internal.component.DefaultAdhocSoftwareComponent
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByType
@@ -40,7 +42,12 @@ fun Project.isRootProject() = this == rootProject
 
 fun Project.isAndroidApplication() = pluginManager.hasPlugin("com.android.application")
 
-fun Project.ignoreReplace() = childProjects.isNotEmpty() || localMaven[project.name] != null || isRootProject()
+fun Project.ignoreByPlugins() = !pluginManager.hasPlugin("java-library") && !pluginManager.hasPlugin("com.android.library")
+
+fun Project.ignoreKspCompilerModel() = configurations.any { it.dependencies.any { it.group == "com.google.devtools.ksp" } }
+
+fun Project.ignoreReplace() =
+    childProjects.isNotEmpty() || localMaven[project.name] != null || isRootProject() || ignoreByPlugins() || ignoreKspCompilerModel()
 
 fun Configuration.beforeEvaluateImplementationToCompileOnly(project: Project) {
     if (name == "implementation") {
@@ -61,6 +68,8 @@ fun Configuration.beforeEvaluateImplementationToCompileOnly(project: Project) {
  * ## 非源码依赖才需要执行此逻辑
  * 非源码依赖project会需要publish成aar依赖，需要把implementation依赖的本地project切换为compileOnly依赖
  * 这样publish成aar的时候就不会把依赖的本地project添加到pom依赖中
+ *
+ * 低版本中会出现 B compileOnly A, A api c 会导致B无法识别到c
  */
 fun Configuration.implementationToCompileOnly(project: Project) {
     if (name == "implementation") {
@@ -69,6 +78,13 @@ fun Configuration.implementationToCompileOnly(project: Project) {
             //DefaultProjectDependency
             println("$configTag -> implementation(${it.identityPath}) to compileOnly".green)
             dependencies.remove(it)
+            val dependencyProject = it.dependencyProject
+            dependencyProject.configurations.filter { it.name == "api" }.forEach {
+                it.dependencies.filterIsInstance<DefaultExternalModuleDependency>().forEach {
+                    println("$configTag -> xxx  $dependencyProject ${name} ${it}  ".green)
+                    project.dependencies.add("implementation", it)
+                }
+            }
             project.dependencies.add("compileOnly", it)
         }
     }
@@ -81,8 +97,6 @@ fun Configuration.implementationToCompileOnly(project: Project) {
  */
 fun Configuration.projectToModuleInDependency(project: Project) {
     val configTag = "$name:${project.name}"
-//    withDependencies {
-//    }
     //afterEvaluate中执行dependencies已经有数据了
     dependencies.filterIsInstance<DefaultProjectDependency>().forEach {
         //DefaultProjectDependency
@@ -168,8 +182,14 @@ fun Project.publishAar() {
                     from(it)
                     println("config publishAar -> ${project.displayName} for java")
                 } ?: afterEvaluate {
+                    //最好能在这里把implementation的project去掉，生成pom的时候就不会有
+                    val component = components.find { it.name.contains("debug") }!!
+                    components.forEach {
+                        //这里最好结合buildFlavor
+                        println("config publishAar -> ${project.displayName} for ${it.name}")
+                    }
                     from(components["debug"])
-                    println("config publishAar -> ${project.displayName} for debug")
+                    println("config publishAar -> ${project.displayName} for debug $component ${component::class.java.simpleName}")
                 }
             }
         }

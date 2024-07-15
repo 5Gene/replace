@@ -1,4 +1,3 @@
-import wings.replace
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,7 +9,7 @@ android {
 }
 
 dependencies {
-    implementation(replace(":feature:home"))
+    implementation(project(":feature:home"))
 //    implementation(replace(":feature:media"))
     implementation(project(":feature:media"))
 //    compileOnly(replace(":feature:profile"))

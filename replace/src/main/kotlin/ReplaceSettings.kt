@@ -22,6 +22,7 @@ import org.gradle.api.internal.project.DefaultProject
 import wings.addLocalMaven
 import wings.blue
 import wings.collectLocalMaven
+import wings.getPublishTask
 import wings.ignoreReplace
 import wings.implementationToCompileOnly
 import wings.isAndroidApplication
@@ -29,7 +30,9 @@ import wings.isRootProject
 import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
+import wings.red
 import wings.replaceRootTask
+import wings.toLocalRepoDirectory
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -51,17 +54,34 @@ class ReplaceSettings : Plugin<Settings> {
     }
 
     private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
+//        val hasClean = settings.gradle.startParameter.taskRequests.any { it.args.contains("clean") }
+//        if (hasClean) {
+//            println("startParameter with clean clear LocalMaven all aars ${settings.gradle.rootProject.toLocalRepoDirectory().parentFile.deleteRecursively()}".red)
+//        }
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
-                if (localMaven.isNotEmpty()) {
-                    if (localMaven.keys.contains(project.name)) {
-                        val remove = project.rootProject.subprojects.remove(project)
-                        println("beforeEvaluate -> remove ${project}: $remove".blue)
-                    }
-                }
+
             }
 
             override fun afterEvaluate(project: Project, state: ProjectState) {
+                //是否是源码依赖项目
+                val identityPath = (project as DefaultProject).identityPath.toString()
+                val isSrcProject = replaceExtension.srcProject.contains(identityPath)
+                println("afterEvaluate -> ${replaceExtension.srcProject} ")
+                println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
+                //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
+                if (isSrcProject || project.isAndroidApplication()) {
+                    project.addLocalMaven()
+                    project.configurations.all {
+                        //源码依赖的project才需要
+                        //找到所有本地project依赖，根据需要替换为远端aar依赖
+                        projectToModuleInDependency(project)
+                    }
+                    project.repositories.forEach {
+                        println("afterEvaluate repositories >${project.name} ${it.name}")
+                    }
+                    return
+                }
                 if (project.ignoreReplace()) {
                     println("afterEvaluate -> project: 【${project.name}】ignore".blue)
                     if (project.isRootProject()) {
@@ -78,43 +98,28 @@ class ReplaceSettings : Plugin<Settings> {
                     }
                     return
                 }
-                //是否是源码依赖项目
-                val identityPath = (project as DefaultProject).identityPath.toString()
-                val isSrcProject = replaceExtension.srcProject.contains(identityPath)
-                println("afterEvaluate -> ${replaceExtension.srcProject} ")
-                println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
-                //resolutionStrategy.disableDependencyVerification()
-                if (isSrcProject || project.isAndroidApplication()) {
-                    project.addLocalMaven()
-                    project.configurations.all {
-                        //源码依赖的project才需要
-                        //找到所有本地project依赖，根据需要替换为远端aar依赖
-                        projectToModuleInDependency(project)
-                    }
-                    project.repositories.forEach {
-                        println("afterEvaluate repositories >${project.name} ${it.name}")
-                    }
-                } else {
-                    project.configurations.all {
-                        //非源码依赖project会需要publish成aar依赖，需要把implementation依赖的本地project切换为compileOnly依赖
-                        //这样publish成aar的时候就不会把依赖的本地project添加到pom依赖中
-                        implementationToCompileOnly(project)
-//                        projectToModuleInDependency(project)
-                    }
-                    //添加【publish】任务发布aar
-                    project.publishAar()
-                    //如果项目配置了publish，那么他依赖的mudle会变成本可以仓库依赖
-                    //原来Replace-main.basic:helper:unspecified这个是通过project("base:helper")依赖的)
-                    //当helper配置了publish
-                    //依赖helper的父级项目中对helper的依赖由project("base:helper")=>aar:helper:dev
 
-                    //配置发布aar任务先于preBuild
-                    val publishTask = project.tasks.getByName("publishSparkPublicationToAarRepository")
-                    val firstBuildTask = project.tasks.findByName("preBuild") ?: project.tasks.findByName("compileKotlin") ?: project.tasks.getByName("compileJava")
-                    println("${project.name} firstBuildTask -> $firstBuildTask")
-                    firstBuildTask.finalizedBy(publishTask)
+                //不是源码依赖, 那么需要配置任务发布aar
+                project.configurations.all {
+                    //非源码依赖project会需要publish成aar依赖，需要把implementation依赖的本地project切换为compileOnly依赖
+                    //这样publish成aar的时候就不会把依赖的本地project添加到pom依赖中
+                    implementationToCompileOnly(project)
+//                        projectToModuleInDependency(project)
                 }
+                //添加【publish】任务发布aar
+                project.publishAar()
+                //如果项目配置了publish，那么他依赖的mudle会变成本可以仓库依赖
+                //原来Replace-main.basic:helper:unspecified这个是通过project("base:helper")依赖的)
+                //当helper配置了publish
+                //依赖helper的父级项目中对helper的依赖由project("base:helper")=>aar:helper:dev
+
+                //配置发布aar任务先于preBuild
+                val publishTask = project.getPublishTask()
+                val firstBuildTask =
+                    project.tasks.findByName("preBuild") ?: project.tasks.findByName("compileKotlin") ?: project.tasks.getByName("compileJava")
+                println("${project.name} firstBuildTask -> $firstBuildTask")
+                firstBuildTask.finalizedBy(publishTask)
             }
         })
     }

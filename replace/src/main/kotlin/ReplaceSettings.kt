@@ -18,11 +18,11 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
-import org.gradle.api.internal.project.DefaultProject
 import wings.addLocalMaven
 import wings.blue
 import wings.collectLocalMaven
 import wings.getPublishTask
+import wings.identityPath
 import wings.ignoreReplace
 import wings.implementationToCompileOnly
 import wings.isAndroidApplication
@@ -30,9 +30,7 @@ import wings.isRootProject
 import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
-import wings.red
 import wings.replaceRootTask
-import wings.toLocalRepoDirectory
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -48,45 +46,54 @@ abstract class ReplaceExtension {
  */
 class ReplaceSettings : Plugin<Settings> {
 
+    var buildCommand = ""
+
     override fun apply(settings: Settings) {
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
         projectEvaluationListener(settings, replaceExtension)
     }
 
     private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
-//        val hasClean = settings.gradle.startParameter.taskRequests.any { it.args.contains("clean") }
-//        if (hasClean) {
-//            println("startParameter with clean clear LocalMaven all aars ${settings.gradle.rootProject.toLocalRepoDirectory().parentFile.deleteRecursively()}".red)
-//        }
+        settings.gradle.startParameter.taskRequests.forEach {
+            //app:clean, app:assembleOplusReleaseT
+            if (it.args.isNotEmpty()) {
+                buildCommand = it.args.last()
+            }
+            println("startParameter: >>>>>  ${it.args}")
+        }
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
-
+                if (localMaven.isNotEmpty()) {
+                    project.addLocalMaven()
+                    if (localMaven.keys.contains(project.name)) {
+                        val remove = project.rootProject.subprojects.remove(project)
+                        println("beforeEvaluate -> remove ${project}: $remove".blue)
+                    }
+                }
             }
 
             override fun afterEvaluate(project: Project, state: ProjectState) {
                 //是否是源码依赖项目
-                val identityPath = (project as DefaultProject).identityPath.toString()
+                val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
-                println("afterEvaluate -> ${replaceExtension.srcProject} ")
+                println("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ")
                 println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
-                    project.addLocalMaven()
-                    project.configurations.all {
-                        //源码依赖的project才需要
-                        //找到所有本地project依赖，根据需要替换为远端aar依赖
-                        projectToModuleInDependency(project)
-                    }
+                    //源码依赖的project才需要
+                    //找到所有本地project依赖，根据需要替换为远端aar依赖
+                    project.projectToModuleInDependency()
                     project.repositories.forEach {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }
                     return
                 }
-                if (project.ignoreReplace()) {
-                    println("afterEvaluate -> project: 【${project.name}】ignore".blue)
+                val ignoreReplace = project.ignoreReplace()
+                if (ignoreReplace != null) {
+                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".blue)
                     if (project.isRootProject()) {
                         replaceRootTask(project)
-                        localMaven = project.collectLocalMaven()
+                        localMaven = project.collectLocalMaven(replaceExtension.srcProject)
                         println(
                             "【${project.name}】localMaven size:${localMaven.size} ${
                                 localMaven.map { it }.joinToString("\n", "\n") {
@@ -105,10 +112,9 @@ class ReplaceSettings : Plugin<Settings> {
                     //非源码依赖project会需要publish成aar依赖，需要把implementation依赖的本地project切换为compileOnly依赖
                     //这样publish成aar的时候就不会把依赖的本地project添加到pom依赖中
                     implementationToCompileOnly(project)
-//                        projectToModuleInDependency(project)
                 }
                 //添加【publish】任务发布aar
-                project.publishAar()
+                project.publishAar(buildCommand)
                 //如果项目配置了publish，那么他依赖的mudle会变成本可以仓库依赖
                 //原来Replace-main.basic:helper:unspecified这个是通过project("base:helper")依赖的)
                 //当helper配置了publish

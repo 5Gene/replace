@@ -2,9 +2,9 @@ plugins {
     `kotlin-dsl`
 //    `kotlin-dsl-precompiled-script-plugins`
 //    id("org.gradle.kotlin.kotlin-dsl") version "4.4.0"
-    alias(libs.plugins.kotlin.jvm)
+//    kotlin("jvm") version "1.8.0"
     `java-gradle-plugin`
-    id("com.gradle.plugin-publish") version "1.2.1"
+    id("maven-publish")
 }
 
 //主动开启Junit,system.out日志输出显示在控制台,默认控制台不显示system.out输出的日志
@@ -33,11 +33,9 @@ repositories {
 }
 
 //For both the JVM and Android projects, it's possible to define options using the project Kotlin extension DSL:
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
-//        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-//        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xcontext-receivers"
     }
 }
 
@@ -45,11 +43,10 @@ dependencies {
     //includeBuild()中拿不到项目的properties，这里通过System.property取
 //    编译插件的时候就会用到，不需要配置，编译的时候修改就行了
 //    val agp = sysprop("dep.agp.ver", "8.2.0")
-    compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
-    compileOnly("com.android.tools.build:gradle:${libs.versions.android.gradle.plugin.get()}")
-    compileOnly(kotlin(module = "gradle-plugin", version = libs.versions.kotlin.get()))
+    compileOnly("com.android.tools.build:gradle-api:7.2.2")
+    compileOnly("com.android.tools.build:gradle:7.2.2")
+    compileOnly(kotlin(module = "gradle-plugin"))
     compileOnly(gradleApi())
-    testImplementation(libs.test.junit)
 //     https://mvnrepository.com/artifact/org.gradle.kotlin.kotlin-dsl/org.gradle.kotlin.kotlin-dsl.gradle.plugin
 //    implementation("org.gradle.kotlin.kotlin-dsl:org.gradle.kotlin.kotlin-dsl.gradle.plugin:4.4.0")
 
@@ -78,30 +75,30 @@ publishing {
 }
 
 //插件推送之前 先去掉不符合规范的插件
-tasks.findByName("publishPlugins")?.doFirst {
-    //doFirst on task ':conventions:publishPlugins'
-    ">> doFirst on $this ${this.javaClass}".print()
-    //不太明白为什么这里也报错 Extension of type 'GradlePluginDevelopmentExtension' does not exist
-    //因为取错对象的extensions了，这里的this是com.gradle.publish.PublishTask_Decorated, 这个task也有extensions
-    val plugins = rootProject.extensions.getByType<GradlePluginDevelopmentExtension>().plugins
-    plugins.removeIf {
-        //移除不能上传的插件
-        it.displayName.isNullOrEmpty()
-    }
-    plugins.forEach {
-        "- plugin to publish > ${it.name} ${it.id} ${it.displayName}".print()
-    }
-}
+//tasks.findByName("publishPlugins")?.doFirst {
+//    //doFirst on task ':conventions:publishPlugins'
+//    ">> doFirst on $this ${this.javaClass}".print()
+//    //不太明白为什么这里也报错 Extension of type 'GradlePluginDevelopmentExtension' does not exist
+//    //因为取错对象的extensions了，这里的this是com.gradle.publish.PublishTask_Decorated, 这个task也有extensions
+//    val plugins = rootProject.extensions.getByType<GradlePluginDevelopmentExtension>().plugins
+//    plugins.removeIf {
+//        //移除不能上传的插件
+//        it.displayName.isNullOrEmpty()
+//    }
+//    plugins.forEach {
+//        "- plugin to publish > ${it.name} ${it.id} ${it.displayName}".print()
+//    }
+//}
 
 gradlePlugin {
-    website = "https://github.com/zzgene/replace"
-    vcsUrl = "https://github.com/zzgene/replace"
+//    website = "https://github.com/zzgene/replace"
+//    vcsUrl = "https://github.com/zzgene/replace"
     plugins {
         register("aar-replace") {
             id = "${group}.replace"
             displayName = "aar replace module plugin"
             description = "significantly reducing the compilation time"
-            tags = listOf("aar", "LocalMaven")
+//            tags = listOf("aar", "LocalMaven")
             implementationClass = "ReplaceSettings"
         }
     }

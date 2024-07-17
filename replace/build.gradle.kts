@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "1.2.1"
+    id("maven-publish")
 }
 
 //主动开启Junit,system.out日志输出显示在控制台,默认控制台不显示system.out输出的日志
@@ -42,12 +43,10 @@ kotlin {
 }
 
 dependencies {
-    //includeBuild()中拿不到项目的properties，这里通过System.property取
-//    编译插件的时候就会用到，不需要配置，编译的时候修改就行了
-//    val agp = sysprop("dep.agp.ver", "8.2.0")
     compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
     compileOnly("com.android.tools.build:gradle:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(kotlin(module = "gradle-plugin", version = libs.versions.kotlin.get()))
+    implementation("com.gradle.publish:plugin-publish-plugin:1.2.1")
     compileOnly(gradleApi())
     testImplementation(libs.test.junit)
 //     https://mvnrepository.com/artifact/org.gradle.kotlin.kotlin-dsl/org.gradle.kotlin.kotlin-dsl.gradle.plugin

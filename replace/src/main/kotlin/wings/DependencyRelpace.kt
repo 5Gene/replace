@@ -6,8 +6,8 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
+import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.internal.component.DefaultAdhocSoftwareComponent
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByType
@@ -188,7 +188,25 @@ fun Project.publishAar() {
                         //这里最好结合buildFlavor
                         println("config publishAar -> ${project.displayName} for ${it.name}")
                     }
+                    val softwareComponentInternal = component as SoftwareComponentInternal
+                    println("++++++++++++++++++++++ ${softwareComponentInternal.usages.size} ${softwareComponentInternal.usages::class.java.simpleName}")
+                    softwareComponentInternal.usages.forEach {
+                        println("================== ${it.name} ${it::class.java.simpleName}")
+                        it.dependencies.removeIf {
+                            println("xxxxxxxxxxxxxxxx $it ${it::class.java.simpleName}")
+                            it is DefaultProjectDependency
+                        }
+                    }
                     from(components["debug"])
+//                    pom.withXml {
+//                        asNode().dependencies.dependency.findAll { dependency ->
+//                            dependency.groupId.text() == dependencyGroup &&
+//                                    dependency.artifactId.text() == dependencyName &&
+//                                    dependency.version.text() == dependencyVersion
+//                        }.forEach {
+//                            it.parent().remove(it)
+//                        }
+//                    }
                     println("config publishAar -> ${project.displayName} for debug $component ${component::class.java.simpleName}")
                 }
             }

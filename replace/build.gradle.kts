@@ -46,7 +46,6 @@ dependencies {
     compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
     compileOnly("com.android.tools.build:gradle:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(kotlin(module = "gradle-plugin", version = libs.versions.kotlin.get()))
-    implementation("com.gradle.publish:plugin-publish-plugin:1.2.1")
     compileOnly(gradleApi())
     testImplementation(libs.test.junit)
 //     https://mvnrepository.com/artifact/org.gradle.kotlin.kotlin-dsl/org.gradle.kotlin.kotlin-dsl.gradle.plugin

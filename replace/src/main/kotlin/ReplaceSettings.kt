@@ -47,11 +47,15 @@ abstract class ReplaceExtension {
  * The settings script contains the list of modules applied to the project
  * which allows us to hook up on sub-project's creation.
  */
-class ReplaceSettings : Plugin<Settings> {
+class ReplaceSettings() : Plugin<Settings> {
+//class ReplaceSettings @Inject constructor(var flowScope: FlowScope, val flowProviders: FlowProviders) : Plugin<Settings> {
 
     var buildCommand = ""
 
+
     override fun apply(settings: Settings) {
+//        println(flowScope)
+//        flowProviders.buildWorkResult.get()
         settings.gradle.startParameter.taskRequests.forEach {
             //app:clean, app:assembleOplusReleaseT
             if (it.args.isNotEmpty()) {

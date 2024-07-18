@@ -9,6 +9,5 @@ android {
 
 dependencies {
     implementation(project(":basic:helpers"))
-    implementation(project(":basic:uikit"))
-    implementation(project(":kt"))
+    api(project(":basic:uikit"))
 }

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">uikit</string>
+    <string name="app_name_uikit">uikit</string>
+    <string name="test_str_from_uikit">uikit</string>
 </resources>

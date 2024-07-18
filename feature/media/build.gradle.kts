@@ -8,6 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":basic:helpers"))
-    implementation(project(":basic:uikit"))
+    api(project(":basic:helpers"))
+    api(project(":basic:uikit"))
 }

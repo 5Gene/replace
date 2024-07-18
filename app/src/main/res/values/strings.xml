@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Replace</string>
+
+    <array name="app_uikit">
+        <item>@string/test_str_from_uikit</item>
+        <item>@string/app_name_uikit</item>
+    </array>
 </resources>

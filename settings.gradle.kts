@@ -38,8 +38,8 @@ plugins {
 
 replace {
     srcProject(
-//        ":feature:home"
-        ":basic:uikit"
+        ":feature:home"
+//        ":basic:uikit"
     )
 }
 

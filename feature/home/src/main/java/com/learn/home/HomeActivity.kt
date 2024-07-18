@@ -12,12 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.bumptech.glide.Glide
+import com.example.kt.ClassFromKt
 import com.learn.home.ui.theme.ReplaceTheme
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ClassFromKt.test()
         Glide.with(this)
             .load("url")
         setContent {

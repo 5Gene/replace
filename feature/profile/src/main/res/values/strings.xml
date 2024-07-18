@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">profile</string>
+    <array name="tt">
+        <item>@string/test_str_from_uikit</item>
+        <item>@string/app_name_uikit</item>
+    </array>
 </resources>

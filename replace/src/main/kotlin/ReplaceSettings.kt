@@ -13,18 +13,21 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+import org.gradle.BuildListener
+import org.gradle.BuildResult
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
+import org.gradle.api.invocation.Gradle
 import wings.addLocalMaven
+import wings.apiProjectDependencices
 import wings.blue
 import wings.collectLocalMaven
 import wings.getPublishTask
 import wings.identityPath
 import wings.ignoreReplace
-import wings.implementationToCompileOnly
 import wings.isAndroidApplication
 import wings.isRootProject
 import wings.localMaven
@@ -48,12 +51,8 @@ class ReplaceSettings : Plugin<Settings> {
 
     var buildCommand = ""
 
-    override fun apply(settings: Settings) {
-        val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
-        projectEvaluationListener(settings, replaceExtension)
-    }
 
-    private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
+    override fun apply(settings: Settings) {
         settings.gradle.startParameter.taskRequests.forEach {
             //app:clean, app:assembleOplusReleaseT
             if (it.args.isNotEmpty()) {
@@ -61,13 +60,47 @@ class ReplaceSettings : Plugin<Settings> {
             }
             println("startParameter: >>>>>  ${it.args}")
         }
+        val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
+        projectEvaluationListener(settings, replaceExtension)
+        settings.gradle.addBuildListener(object : BuildListener {
+            override fun settingsEvaluated(settings: Settings) {
+
+            }
+
+            override fun projectsLoaded(gradle: Gradle) {
+            }
+
+            override fun projectsEvaluated(gradle: Gradle) {
+            }
+
+            override fun buildFinished(result: BuildResult) {
+                println(apiProjectDependencices)
+            }
+        })
+    }
+
+    private fun projectEvaluationListener(settings: Settings, replaceExtension: ReplaceExtension) {
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
+                if (project.isRootProject()) {
+                    replaceRootTask(project)
+                    localMaven = project.collectLocalMaven(replaceExtension.srcProject)
+                    println(
+                        "【${project.name}】localMaven size:${localMaven.size} ${
+                            localMaven.map { it }.joinToString("\n", "\n") {
+                                val projectName = "【${it.key}】"
+                                "${projectName.padEnd(22, '-')}-> ${it.value}"
+                            }
+                        }".blue
+                    )
+                }
                 if (localMaven.isNotEmpty()) {
-                    project.addLocalMaven()
                     if (localMaven.keys.contains(project.name)) {
                         val remove = project.rootProject.subprojects.remove(project)
                         println("beforeEvaluate -> remove ${project}: $remove".blue)
+                    } else {
+                        //源码依赖，添加本地仓库
+                        project.addLocalMaven()
                     }
                 }
             }
@@ -91,35 +124,15 @@ class ReplaceSettings : Plugin<Settings> {
                 val ignoreReplace = project.ignoreReplace()
                 if (ignoreReplace != null) {
                     println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".blue)
-                    if (project.isRootProject()) {
-                        replaceRootTask(project)
-                        localMaven = project.collectLocalMaven(replaceExtension.srcProject)
-                        println(
-                            "【${project.name}】localMaven size:${localMaven.size} ${
-                                localMaven.map { it }.joinToString("\n", "\n") {
-                                    val projectName = "【${it.key}】"
-                                    "${projectName.padEnd(13, '-')}-> ${it.value}"
-                                }
-                            }".blue
-                        )
+                    project.repositories.forEach {
+                        println("afterEvaluate repositories >${project.name} ${it.name}")
                     }
                     return
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
-
                 //不是源码依赖, 那么需要配置任务发布aar
-                project.configurations.all {
-                    //非源码依赖project会需要publish成aar依赖，需要把implementation依赖的本地project切换为compileOnly依赖
-                    //这样publish成aar的时候就不会把依赖的本地project添加到pom依赖中
-                    implementationToCompileOnly(project)
-                }
                 //添加【publish】任务发布aar
-                project.publishAar(buildCommand)
-                //如果项目配置了publish，那么他依赖的mudle会变成本可以仓库依赖
-                //原来Replace-main.basic:helper:unspecified这个是通过project("base:helper")依赖的)
-                //当helper配置了publish
-                //依赖helper的父级项目中对helper的依赖由project("base:helper")=>aar:helper:dev
-
+                project.publishAar(buildCommand, replaceExtension.srcProject)
                 //配置发布aar任务先于preBuild
                 val publishTask = project.getPublishTask()
                 val firstBuildTask =

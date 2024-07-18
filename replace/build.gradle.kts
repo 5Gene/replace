@@ -40,9 +40,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 dependencies {
-    //includeBuild()中拿不到项目的properties，这里通过System.property取
-//    编译插件的时候就会用到，不需要配置，编译的时候修改就行了
-//    val agp = sysprop("dep.agp.ver", "8.2.0")
     compileOnly("com.android.tools.build:gradle-api:7.2.2")
     compileOnly("com.android.tools.build:gradle:7.2.2")
     compileOnly(kotlin(module = "gradle-plugin"))
@@ -73,22 +70,6 @@ publishing {
         }
     }
 }
-
-//插件推送之前 先去掉不符合规范的插件
-//tasks.findByName("publishPlugins")?.doFirst {
-//    //doFirst on task ':conventions:publishPlugins'
-//    ">> doFirst on $this ${this.javaClass}".print()
-//    //不太明白为什么这里也报错 Extension of type 'GradlePluginDevelopmentExtension' does not exist
-//    //因为取错对象的extensions了，这里的this是com.gradle.publish.PublishTask_Decorated, 这个task也有extensions
-//    val plugins = rootProject.extensions.getByType<GradlePluginDevelopmentExtension>().plugins
-//    plugins.removeIf {
-//        //移除不能上传的插件
-//        it.displayName.isNullOrEmpty()
-//    }
-//    plugins.forEach {
-//        "- plugin to publish > ${it.name} ${it.id} ${it.displayName}".print()
-//    }
-//}
 
 gradlePlugin {
 //    website = "https://github.com/zzgene/replace"

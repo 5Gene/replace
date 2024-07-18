@@ -36,17 +36,17 @@ plugins {
 //	}
 //}
 
-replace {
-    srcProject(
+//replace {
+//    srcProject(
 //        ":feature:home"
-        ":basic:uikit"
-    )
-}
+//        ":basic:uikit"
+//    )
+//}
 
-include(":app")
-include(":basic:helpers")
-include(":feature:home")
-include(":basic:uikit")
-include(":feature:media")
-include(":feature:profile")
-include(":kt")
+//include(":app")
+//include(":basic:helpers")
+//include(":feature:home")
+//include(":basic:uikit")
+//include(":feature:media")
+//include(":feature:profile")
+//include(":kt")

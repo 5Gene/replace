@@ -3,7 +3,8 @@ plugins {
 //    `kotlin-dsl-precompiled-script-plugins`
 //    id("org.gradle.kotlin.kotlin-dsl") version "4.4.0"
 //    kotlin("jvm") version "1.8.0"
-    `java-gradle-plugin`
+//    `java-gradle-plugin`
+    id("com.gradle.plugin-publish") version "1.2.1"
     id("maven-publish")
 }
 
@@ -72,8 +73,8 @@ publishing {
 }
 
 gradlePlugin {
-//    website = "https://github.com/zzgene/replace"
-//    vcsUrl = "https://github.com/zzgene/replace"
+    setWebsite("https://github.com/5Gene/replace")
+    setVcsUrl("https://github.com/5Gene/replace")
     plugins {
         register("aar-replace") {
             id = "${group}.replace"

@@ -22,7 +22,6 @@ import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
 import wings.addLocalMaven
-import wings.apiProjectDependencices
 import wings.blue
 import wings.collectLocalMaven
 import wings.getPublishTask
@@ -121,7 +120,7 @@ class ReplaceSettings() : Plugin<Settings> {
                 if (isSrcProject || project.isAndroidApplication()) {
                     //源码依赖的project才需要
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
-                    project.projectToModuleInDependency()
+                    project.projectToModuleInDependency(replaceExtension.srcProject)
                     project.repositories.forEach {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }

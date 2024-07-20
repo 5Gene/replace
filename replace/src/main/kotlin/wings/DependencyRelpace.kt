@@ -118,7 +118,7 @@ private fun transitiveByApiProject(
  *
  * 依赖的project替换为远端依赖
  */
-private fun Project.doProjectToModuleInDependency(): MutableMap<String, String> {
+private fun Project.doProjectToModuleInDependency(multableSrcProjects: MutableList<String>): MutableMap<String, String> {
     //需要补充的本地依赖，所有本地依赖中还剩下哪些没被依赖，app模块需要用
     val replenishLocalMavenAars = localMaven.toMutableMap()
     configurations.forEach {
@@ -128,6 +128,7 @@ private fun Project.doProjectToModuleInDependency(): MutableMap<String, String> 
         //afterEvaluate中执行dependencies已经有数据了
         it.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { projectDependency ->
             //DefaultProjectDependency
+            multableSrcProjects.remove(projectDependency.identityPath.toString())
             localMaven[projectDependency.name]?.let { aar ->
                 //存在aar依赖才需要移除project依赖
                 it.dependencies.remove(projectDependency)
@@ -140,12 +141,13 @@ private fun Project.doProjectToModuleInDependency(): MutableMap<String, String> 
     return replenishLocalMavenAars
 }
 
-fun Project.projectToModuleInDependency() {
+fun Project.projectToModuleInDependency(srcProjects: List<String>) {
     if (localMaven.isEmpty()) {
         println("projectToModuleInDependency -> project(${project.identityPath()}) No LocalMaven so current is the first Build".green)
         return
     }
-    val replenishLocalMavenAars = doProjectToModuleInDependency()
+    val multableSrcProjects = srcProjects.toMutableList()
+    val replenishLocalMavenAars = doProjectToModuleInDependency(multableSrcProjects)
     if (isAndroidApplication()) {
         //可能存在 app--C, 而 C--A,(而C发布aar的时候依赖不包含A) app没直接依赖A,导致app打包没把A加进去
         replenishLocalMavenAars.forEach {
@@ -153,6 +155,10 @@ fun Project.projectToModuleInDependency() {
             project.dependencies.add("runtimeOnly", it.value)
         }
         //源码模块也要加进去
+        multableSrcProjects.forEach {
+            project.dependencies.add("runtimeOnly", project.dependencies.project(it))
+            println("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".red)
+        }
     }
 }
 

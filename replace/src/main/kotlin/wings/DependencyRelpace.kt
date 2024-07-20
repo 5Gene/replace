@@ -10,6 +10,7 @@ import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.capabilities.Capability
 import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.initialization.Settings
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.internal.component.UsageContext
@@ -88,7 +89,7 @@ fun Project.ignoreByPlugin() =
 fun Project.ignoreReplace(): String? = (if (childProjects.isNotEmpty()) "father project" else null)
     ?: localMaven[project.name]
     ?: (if (isRootProject()) identityPath() else null)
-    ?: (if (ignoreByPlugin()) "not android and java library" else null)
+//    ?: (if (ignoreByPlugin()) "not android and java library" else null)
     ?: (if (isKspCompilerModel()) "ksp module" else null)
 
 private fun transitiveByApiProject(
@@ -101,11 +102,12 @@ private fun transitiveByApiProject(
     val transitiveAar = replenishLocalMavenAars.remove(addProjectName)
     if (transitiveAar != null) {
         //没添加过就添加
-        println("$tag -> $configName($transitiveAar) to ${toProject.name}".green)
+        println("$tag -> transitiveByApiProject -> $configName($transitiveAar) to ${toProject.name}".green)
         toProject.dependencies.add(configName, transitiveAar)
         //这里要补充这个project内部api依赖的project要传递出来，因为project发布aar后api的project被移除了
         val apiProjects = apiProjectDependencices[addProjectName]
         apiProjects?.forEach { projectName ->
+            println("$tag -> transitiveByApiProject -> apiProjectDependency $addProjectName has api $projectName".blue)
             transitiveByApiProject(tag, projectName, replenishLocalMavenAars, configName, toProject)
         }
     }
@@ -150,6 +152,7 @@ fun Project.projectToModuleInDependency() {
             println("【$name】 -> replenish runtimeOnly(${it.value}) for ${project.name}".green)
             project.dependencies.add("runtimeOnly", it.value)
         }
+        //源码模块也要加进去
     }
 }
 
@@ -165,6 +168,8 @@ fun Project.addLocalMaven() {
     }
 }
 
+fun String.isNormalDependency() = this.endsWith("mplementation") || this.endsWith("api", true) || this.endsWith("ompileOnly") || this.endsWith("untimeOnly")
+
 fun Project.publishAar(buildCommand: String) {
     if (!pluginManager.hasPlugin("maven-publish")) {
         pluginManager.apply("maven-publish")
@@ -172,25 +177,23 @@ fun Project.publishAar(buildCommand: String) {
     val projectName = name
     //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
     //发布aar记录它api的project
-    configurations.filter { it.name == "api" }.forEach {
-        //debugApi先忽略
-        it.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { dependency ->
-            val apiProjects = apiProjectDependencices.getOrPut(projectName) { mutableSetOf<String>() }
-            apiProjects.add(dependency.name)
-            println("【$projectName】find api project(${dependency.identityPath}) -> ${apiProjectDependencices[projectName]}".red)
+    configurations.filter { it.name.isNormalDependency() }.forEach {
+        val configName = it.name
+        if (configName == "api") {//debugApi先忽略
+            it.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { dependency ->
+                //project模块只有aar也在这,不好判断
+                val apiProjects = apiProjectDependencices.getOrPut(projectName) { mutableSetOf<String>() }
+                apiProjects.add(dependency.name)
+                println("【$projectName】find api $configName(project(${dependency.identityPath})) -> ${apiProjectDependencices[projectName]}".red)
+            }
         }
-    }
-//    configurations.all {
-//        if (this.name == "api") {
-//            dependencies.all {
-//                if (this is DefaultProjectDependency) {
-//                    val apiProjects = apiProjectDependencices.getOrPut(projectName) { mutableSetOf<String>() }
-//                    apiProjects.add(name)
-//                    println("【$projectName】find api project($identityPath) -> ${apiProjectDependencices[projectName]}".blue)
-//                }
-//            }
+        //DefaultSelfResolvingDependency project中通过fileTree依赖的java等文件
+//        val files = it.dependencies.filterIsInstance<DefaultSelfResolvingDependency>().map { it.files.files }.flatten()
+//        if (files.isNotEmpty()) {
+//            println("【$projectName】find File dependencies $configName(file(${files})) -> please remove it, or add it to srcProject".red)
+//            throw RuntimeException("【$projectName】find File dependencies $configName(file(${files})) -> please remove it, or add it to srcProject".red)
 //        }
-//    }
+    }
 
     println("${this@publishAar.name} config publishAar -> ${project.displayName}")
     val publishingExtension = extensions.getByType<PublishingExtension>()
@@ -241,7 +244,11 @@ class NoProjectDependencyUsageContext(val usages: UsageContext) : UsageContext {
 
     override fun getDependencies(): MutableSet<out ModuleDependency> {
         println("-> hook  NoProjectDependencyUsageContext => getDependencies")
-        return usages.dependencies.filter { it !is DefaultProjectDependency }.toMutableSet()
+        //只保留远程依赖
+        //本地Project依赖忽略 > DefaultProjectDependency 正常module也包括只有aar的模块
+        //本地文件依赖忽略 > DefaultSelfResolvingDependency -> 依赖的文件依赖的jar,依赖的模块只有文件aar
+        //implementation fileTree(dir: 'libs', include: ['*.jar']) 这种方式添加的jar会被打包进aar目录的libs目录
+        return usages.dependencies.filterIsInstance<DefaultExternalModuleDependency>().toMutableSet()
     }
 
     override fun getDependencyConstraints(): MutableSet<out DependencyConstraint> {

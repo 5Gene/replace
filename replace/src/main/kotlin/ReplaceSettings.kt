@@ -27,13 +27,16 @@ import wings.blue
 import wings.collectLocalMaven
 import wings.getPublishTask
 import wings.identityPath
+import wings.ignoreByPlugin
 import wings.ignoreReplace
 import wings.isAndroidApplication
 import wings.isRootProject
 import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
+import wings.readApiProjectDependencies
 import wings.replaceRootTask
+import wings.saveApiProjectDependencies
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -67,7 +70,6 @@ class ReplaceSettings() : Plugin<Settings> {
         projectEvaluationListener(settings, replaceExtension)
         settings.gradle.addBuildListener(object : BuildListener {
             override fun settingsEvaluated(settings: Settings) {
-
             }
 
             override fun projectsLoaded(gradle: Gradle) {
@@ -77,8 +79,7 @@ class ReplaceSettings() : Plugin<Settings> {
             }
 
             override fun buildFinished(result: BuildResult) {
-                println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-                println(apiProjectDependencices)
+                settings.gradle.rootProject.saveApiProjectDependencies()
             }
         })
     }
@@ -87,6 +88,7 @@ class ReplaceSettings() : Plugin<Settings> {
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
                 if (project.isRootProject()) {
+                    project.readApiProjectDependencies()
                     replaceRootTask(project)
                     localMaven = project.collectLocalMaven(replaceExtension.srcProject)
                     println(
@@ -132,6 +134,9 @@ class ReplaceSettings() : Plugin<Settings> {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }
                     return
+                }
+                if (project.ignoreByPlugin()) {
+                    throw RuntimeException("${project.name} is not a android library or java library, you must config it to srcProject(【${project.identityPath()}】)")
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar

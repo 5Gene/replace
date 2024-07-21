@@ -103,9 +103,6 @@ class ReplaceSettings() : Plugin<Settings> {
                     if (localMaven.keys.contains(project.name)) {
                         val remove = project.rootProject.subprojects.remove(project)
                         println("beforeEvaluate -> remove ${project}: $remove".blue)
-                    } else {
-                        //源码依赖，添加本地仓库
-                        project.addLocalMaven()
                     }
                 }
             }
@@ -118,6 +115,10 @@ class ReplaceSettings() : Plugin<Settings> {
                 println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
+                    if (project.repositories.size > 0) {
+                        //源码依赖，添加本地仓库
+                        project.addLocalMaven()
+                    }
                     //源码依赖的project才需要
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
                     project.projectToModuleInDependency(replaceExtension.srcProject)
@@ -133,9 +134,6 @@ class ReplaceSettings() : Plugin<Settings> {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }
                     return
-                }
-                if (project.ignoreByPlugin()) {
-                    throw RuntimeException("${project.name} is not a android library or java library, you must config it to srcProject(【${project.identityPath()}】)")
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar

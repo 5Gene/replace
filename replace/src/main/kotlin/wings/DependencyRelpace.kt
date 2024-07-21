@@ -137,7 +137,7 @@ private fun Project.doProjectToModuleInDependency(srcProjects: List<String>): Pa
     configurations.forEach {
         val configName = it.name
         val configTag = "【$projectName】> $configName > doProjectToModuleInDependency >>"
-        println("【$configTag】configurations-> ${it.name}")
+        println("$configTag configurations-> ${it.name}")
         val usedSrcProjects = usedSrcProjectsWithConfig.getOrPut(configName) { mutableSetOf<String>() }
         val replenishLocalMavenAars = replenishLocalMavenAarsWithConfig.getOrPut(configName) { localMaven.toMutableMap() }
         //afterEvaluate中执行dependencies已经有数据了

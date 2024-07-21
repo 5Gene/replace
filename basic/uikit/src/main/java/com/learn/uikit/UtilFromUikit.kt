@@ -1,7 +1,10 @@
 package com.learn.uikit
 
+import com.example.kt.ClassFromKt
+
 object UtilFromUikit {
     fun testUikit() {
-        println("ukit")
+        println("ukit xxxxxxx")
+        ClassFromKt.test()
     }
 }

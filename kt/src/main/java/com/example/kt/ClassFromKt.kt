@@ -2,6 +2,6 @@ package com.example.kt
 
 object ClassFromKt {
     fun test() {
-        println("xxxxxxxxxxxx")
+        println("ClassFromKt 222")
     }
 }

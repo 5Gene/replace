@@ -21,12 +21,10 @@ import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
-import wings.addLocalMaven
 import wings.blue
 import wings.collectLocalMaven
 import wings.getPublishTask
 import wings.identityPath
-import wings.ignoreByPlugin
 import wings.ignoreReplace
 import wings.isAndroidApplication
 import wings.isRootProject
@@ -115,10 +113,6 @@ class ReplaceSettings() : Plugin<Settings> {
                 println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
-                    if (project.repositories.size > 0) {
-                        //源码依赖，添加本地仓库
-                        project.addLocalMaven()
-                    }
                     //源码依赖的project才需要
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
                     project.projectToModuleInDependency(replaceExtension.srcProject)
@@ -138,7 +132,7 @@ class ReplaceSettings() : Plugin<Settings> {
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar
                 //添加【publish】任务发布aar
-                project.publishAar(buildCommand)
+                project.publishAar(buildCommand, replaceExtension.srcProject)
                 //配置发布aar任务先于preBuild
                 val publishTask = project.getPublishTask()
                 val firstBuildTask =

@@ -43,8 +43,6 @@ kotlin {
 }
 
 dependencies {
-    compileOnly("com.android.tools.build:gradle-api:${libs.versions.android.gradle.plugin.get()}")
-    compileOnly("com.android.tools.build:gradle:${libs.versions.android.gradle.plugin.get()}")
     compileOnly(kotlin(module = "gradle-plugin", version = libs.versions.kotlin.get()))
     compileOnly(gradleApi())
     testImplementation(libs.test.junit)

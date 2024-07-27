@@ -1,6 +1,5 @@
 package wings
 
-import com.android.build.gradle.internal.cxx.json.writeJsonFile
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
@@ -20,7 +19,7 @@ fun Project.readApiProjectDependencies() {
    val cache = File(rootProject.toLocalRepoDirectory(), "apiProjectDependencies")
    if (cache.exists()) {
       val map = JsonSlurper().parseText(cache.readText()) as Map<String, List<String>>
-      map.forEach { k, v ->
+      map.forEach { (k, v) ->
          apiProjectDependencices.put(k,v.toMutableSet())
       }
       println("readApiProjectDependencies -> $apiProjectDependencices".red)

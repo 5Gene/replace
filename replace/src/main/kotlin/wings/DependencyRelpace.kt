@@ -51,8 +51,7 @@ fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
     return map
 }
 
-val DefaultProjectDependency.identityPath: String
-    get() {
+fun DefaultProjectDependency.findIdentityPath(): String  {
         return (dependencyProject as ProjectInternal).identityPath.toString()
     }
 
@@ -80,7 +79,8 @@ fun Project.isRootProject() = this == rootProject
 
 fun Project.isAndroidApplication() = pluginManager.hasPlugin("com.android.application")
 
-fun Project.isKspCompilerModel() = configurations.any { it.dependencies.any { it.group == "com.google.devtools.ksp" } }
+fun Project.isKspCompilerModel() = false
+//fun Project.isKspCompilerModel() = configurations.any { it.dependencies.any { it.group == "com.google.devtools.ksp" } }
 
 //有些模块只有aar
 fun Project.ignoreByPlugin() =
@@ -144,10 +144,10 @@ private fun Project.doProjectToModuleInDependency(srcProjects: List<String>): Pa
         it.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { projectDependency ->
             //project依赖的本地项目替换为LocalMaven的aar,如果是源码依赖则不变
             //DefaultProjectDependency
-            val containSrcProjectDependency = srcProjects.contains(projectDependency.identityPath.toString())
+            val containSrcProjectDependency = srcProjects.contains(projectDependency.findIdentityPath())
             if (containSrcProjectDependency) {
-                usedSrcProjects.add(projectDependency.identityPath.toString())
-                println("$configTag $configName(project(${projectDependency.identityPath})) is src project".green)
+                usedSrcProjects.add(projectDependency.findIdentityPath())
+                println("$configTag $configName(project(${projectDependency.findIdentityPath()})) is src project".green)
             } else {
                 //非源码模块，则映射为LocalMaven的aar依赖，并便利其api依赖到此
                 localMaven[projectDependency.name]?.let { aar ->
@@ -162,7 +162,7 @@ private fun Project.doProjectToModuleInDependency(srcProjects: List<String>): Pa
                         transitiveByApiProject(configTag, projectDependency.name, srcProjects, usedSrcProjects, replenishLocalMavenAars, configName, this)
                     }
                 } ?: run {
-                    println("$configTag $configName(project(${projectDependency.identityPath})) no aar".red)
+                    println("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".red)
                 }
             }
 
@@ -227,7 +227,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                     //project模块只有aar也在这,不好判断
                     val apiProjects = apiProjectDependencices.getOrPut(projectName) { mutableSetOf<String>() }
                     apiProjects.add(dependency.name)
-                    println("【$projectName】find api $configName(project(${dependency.identityPath})) -> ${apiProjectDependencices[projectName]}".red)
+                    println("【$projectName】find api $configName(project(${dependency.findIdentityPath()})) -> ${apiProjectDependencices[projectName]}".red)
                 }
             }
         }

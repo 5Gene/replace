@@ -32,6 +32,7 @@ import wings.localMaven
 import wings.projectToModuleInDependency
 import wings.publishAar
 import wings.readApiProjectDependencies
+import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
 
@@ -76,7 +77,9 @@ class ReplaceSettings() : Plugin<Settings> {
             }
 
             override fun buildFinished(result: BuildResult) {
-                settings.gradle.rootProject.saveApiProjectDependencies()
+                if (localMaven.isEmpty()) {
+                    settings.gradle.rootProject.saveApiProjectDependencies()
+                }
             }
         })
     }
@@ -88,11 +91,12 @@ class ReplaceSettings() : Plugin<Settings> {
                     project.readApiProjectDependencies()
                     replaceRootTask(project)
                     localMaven = project.collectLocalMaven(replaceExtension.srcProject)
+                    val length = localMaven.map { it.key.length }.max()
                     println(
                         "【${project.name}】localMaven size:${localMaven.size} ${
                             localMaven.map { it }.joinToString("\n", "\n") {
                                 val projectName = "【${it.key}】"
-                                "${projectName.padEnd(22, '-')}-> ${it.value}"
+                                "${projectName.padEnd(length * 2, '-')}-> ${it.value}"
                             }
                         }".blue
                     )
@@ -123,7 +127,7 @@ class ReplaceSettings() : Plugin<Settings> {
                 }
                 val ignoreReplace = project.ignoreReplace()
                 if (ignoreReplace != null) {
-                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".blue)
+                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".red)
                     project.repositories.forEach {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }
@@ -136,9 +140,11 @@ class ReplaceSettings() : Plugin<Settings> {
                 //配置发布aar任务先于preBuild
                 val publishTask = project.getPublishTask()
                 val firstBuildTask =
-                    project.tasks.findByName("preBuild") ?: project.tasks.findByName("compileKotlin") ?: project.tasks.getByName("compileJava")
+                    project.tasks.findByName("preBuild")
+                        ?: project.tasks.findByName("compileKotlin")
+                        ?: project.tasks.findByName("compileJava")
                 println("${project.name} firstBuildTask -> $firstBuildTask")
-                firstBuildTask.finalizedBy(publishTask)
+                firstBuildTask?.finalizedBy(publishTask)
             }
         })
     }

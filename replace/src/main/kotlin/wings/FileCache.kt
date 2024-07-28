@@ -21,7 +21,7 @@ fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
             map[name] = "$aar_group:$name:$aar_version"
             println("collectLocalMaven 【$name】 -> ${map[name]}")
         } else {
-            println("collectLocalMaven 【$name】 is src project del:${it.deleteRecursively()}".red)
+            println("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
         }
     }
     return map
@@ -34,7 +34,7 @@ fun Project.saveApiProjectDependencies() {
         cache.createNewFile()
     }
     cache.writeText(JsonOutput.toJson(configProjectDependencices))
-    println("save configProjectDependencices -> $configProjectDependencices".red)
+    println("save configProjectDependencices -> $configProjectDependencices".blue)
 }
 
 fun Project.readApiProjectDependencies() {
@@ -53,7 +53,7 @@ fun Project.readApiProjectDependencies() {
             }
             configProjectDependencices[p] = configDeps
         }
-        println("ksp projects -> $kspProjects".red)
-        println("read configProjectDependencices -> $configProjectDependencices".red)
+        println("ksp projects -> $kspProjects".blue)
+        println("read configProjectDependencices -> $configProjectDependencices".blue)
     }
 }

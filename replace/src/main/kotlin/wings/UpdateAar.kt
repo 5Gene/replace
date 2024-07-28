@@ -1,8 +1,6 @@
 package wings
 
 import org.gradle.api.Project
-import org.gradle.api.tasks.Delete
-import org.gradle.kotlin.dsl.register
 
 val findProjectNameRegex = """/(\w+)/src/""".toRegex()
 
@@ -24,7 +22,7 @@ private fun findDiffProjects(): MutableSet<String> {
         findProjectNameRegex.find("/$it")?.groupValues?.get(1)
     }.distinct().toMutableSet()
 
-    println("updateLocalMaven: diffProjects -> $diffProjects".blue)
+    println("updateLocalMaven: diffProjects -> $diffProjects".yellow)
     return diffProjects
 }
 

@@ -139,7 +139,7 @@ private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<Stri
                         transitiveByApiProject(configTag, projectDependency.name, srcProjects, usedSrcProjects, replenishLocalMavenAars, configName, this)
                     }
                 } ?: run {
-                    println("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".red)
+                    println("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".blue)
                 }
             }
 
@@ -165,7 +165,7 @@ fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
         replenish.second?.forEach {
             val isKsp = kspProjects.any { ksp -> it.value.contains(":$ksp:") }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project 【${it.value}】".red)
+                println("【$name】 -> replenish ignore ksp project 【${it.value}】".blue)
             } else {
                 println("【$name】 -> replenish ${it.key} runtimeOnly(${it.value}) for ${project.name}".green)
                 project.dependencies.add("runtimeOnly", it.value)
@@ -175,10 +175,10 @@ fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
         replenish.first?.forEach {
             val isKsp = kspProjects.any { ksp -> it.contains(ksp) }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project 【$it】".red)
+                println("【$name】 -> replenish ignore ksp project 【$it】".blue)
             } else {
                 project.dependencies.add("runtimeOnly", project.dependencies.project(it))
-                println("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".red)
+                println("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".blue)
             }
         }
     }

@@ -23,6 +23,7 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
 import wings.blue
 import wings.collectLocalMaven
+import wings.darkGreen
 import wings.getPublishTask
 import wings.identityPath
 import wings.ignoreReplace
@@ -32,10 +33,10 @@ import wings.localMaven
 import wings.projectToExternalModuleInDependency
 import wings.publishAar
 import wings.readApiProjectDependencies
-import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
 import wings.toRepoDirectory
+import wings.yellow
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -65,10 +66,10 @@ class ReplaceSettings() : Plugin<Settings> {
                 if (it.args.any { it.contains("clean") }) {
                     val repoDirectory = settings.rootDir.toRepoDirectory()
                     val deleteRecursively = repoDirectory.deleteRecursively()
-                    println("clear all aars in $repoDirectory $deleteRecursively".red)
+                    println("clear all aars in $repoDirectory $deleteRecursively".blue)
                 }
             }
-            println("startParameter: >>>>>  ${it.args}".blue)
+            println("startParameter: >>>>>  ${it.args}".yellow)
         }
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
         projectEvaluationListener(settings, replaceExtension)
@@ -104,13 +105,13 @@ class ReplaceSettings() : Plugin<Settings> {
                                 val projectName = "【${it.key}】"
                                 "${projectName.padEnd(length + 6, '-')}-> ${it.value}"
                             }
-                        }".blue
+                        }".yellow
                     )
                 }
                 if (localMaven.isNotEmpty()) {
                     if (localMaven.keys.contains(project.name)) {
                         val remove = project.rootProject.subprojects.remove(project)
-                        println("beforeEvaluate -> remove ${project}: $remove".blue)
+                        println("beforeEvaluate -> remove ${project}: $remove".yellow)
                     }
                 }
             }
@@ -119,8 +120,8 @@ class ReplaceSettings() : Plugin<Settings> {
                 //是否是源码依赖项目
                 val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
-                println("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ")
-                println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject")
+                println("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ".darkGreen)
+                println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
                     //源码依赖的project才需要
@@ -133,9 +134,9 @@ class ReplaceSettings() : Plugin<Settings> {
                 }
                 val ignoreReplace = project.ignoreReplace()
                 if (ignoreReplace != null) {
-                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".red)
+                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
                     project.repositories.forEach {
-                        println("afterEvaluate repositories >${project.name} ${it.name}")
+                        println("afterEvaluate repositories >${project.name} ${it.name}".yellow)
                     }
                     return
                 }

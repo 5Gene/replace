@@ -32,7 +32,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                 //project模块只有aar也在这,不好判断
                 val dependProjects = configProjectDeps.getOrPut(configName) { mutableSetOf() }
                 dependProjects.add(dependency.name)
-                println("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${configProjectDependencices[projectName]}".red)
+                println("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${configProjectDependencices[projectName]}".blue)
             }
         }
     } else {

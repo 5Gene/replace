@@ -38,7 +38,8 @@ plugins {
 
 replace {
     srcProject(
-        ":feature:home",
+//        ":feature:home",
+        ":feature:profile",
 //        ":net-repository",
         ":kt",
 //        ":basic:uikit"
@@ -54,3 +55,4 @@ include(":feature:profile")
 include(":kt")
 include(":net-repository-anno")
 include(":net-repository")
+include(":feature:0_middle")

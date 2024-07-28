@@ -33,6 +33,7 @@ import wings.localMaven
 import wings.projectToExternalModuleInDependency
 import wings.publishAar
 import wings.readApiProjectDependencies
+import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
 import wings.toRepoDirectory
@@ -138,6 +139,10 @@ class ReplaceSettings() : Plugin<Settings> {
                     project.repositories.forEach {
                         println("afterEvaluate repositories >${project.name} ${it.name}".yellow)
                     }
+                    return
+                }
+                if (project.name.startsWith("0_")) {
+                    println("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
                     return
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html

@@ -21,7 +21,7 @@ class MediaActivity : ComponentActivity() {
             ReplaceTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "Media Activity",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

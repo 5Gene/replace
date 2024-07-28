@@ -8,8 +8,6 @@ import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.kotlin.dsl.project
 import org.gradle.kotlin.dsl.repositories
-import org.jetbrains.kotlin.gradle.targets.js.npm.isFileVersion
-import java.io.File
 
 const val aar_group = "aar"
 const val aar_version = "dev"
@@ -20,26 +18,6 @@ var localMaven: Map<String, String> = mapOf()
 val configProjectDependencices = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
 
 val kspProjects = mutableSetOf<String>()
-
-fun Project.toLocalRepoDirectory() = File(rootDir, "build/aars")
-
-fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
-    if (!isRootProject()) {
-        throw RuntimeException("not root project")
-    }
-    val map = mutableMapOf<String, String>()
-    toLocalRepoDirectory().walk().filter { it.isDirectory }.filter { it.parentFile.name == aar_group }.forEach {
-        val name = it.name
-        //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
-        if (!srcProject.any { it.endsWith(name) }) {
-            map[name] = "$aar_group:$name:$aar_version"
-            println("collectLocalMaven $name -> ${map[name]}")
-        } else {
-            println("collectLocalMaven $name is src project".red)
-        }
-    }
-    return map
-}
 
 fun DefaultProjectDependency.findIdentityPath(): String {
     return (dependencyProject as ProjectInternal).identityPath.toString()
@@ -187,7 +165,7 @@ fun Project.projectToModuleInDependency(srcProjects: List<String>) {
         replenish.second?.forEach {
             val isKsp = kspProjects.any { ksp -> it.value.contains(":$ksp:") }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project ${it.value}".red)
+                println("【$name】 -> replenish ignore ksp project 【${it.value}】".red)
             } else {
                 println("【$name】 -> replenish ${it.key} runtimeOnly(${it.value}) for ${project.name}".green)
                 project.dependencies.add("runtimeOnly", it.value)
@@ -197,7 +175,7 @@ fun Project.projectToModuleInDependency(srcProjects: List<String>) {
         replenish.first?.forEach {
             val isKsp = kspProjects.any { ksp -> it.contains(ksp) }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project $it".red)
+                println("【$name】 -> replenish ignore ksp project 【$it】".red)
             } else {
                 project.dependencies.add("runtimeOnly", project.dependencies.project(it))
                 println("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".red)

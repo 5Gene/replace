@@ -38,7 +38,8 @@ plugins {
 
 replace {
     srcProject(
-        ":feature:home",
+//        ":feature:home",
+        ":net-repository",
         ":kt",
 //        ":basic:uikit"
     )

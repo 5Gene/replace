@@ -35,6 +35,7 @@ import wings.readApiProjectDependencies
 import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
+import wings.toRepoDirectory
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -61,8 +62,13 @@ class ReplaceSettings() : Plugin<Settings> {
             //app:clean, app:assembleOplusReleaseT
             if (it.args.isNotEmpty()) {
                 buildCommand = it.args.last()
+                if (it.args.any { it.contains("clean") }) {
+                    val repoDirectory = settings.rootDir.toRepoDirectory()
+                    val deleteRecursively = repoDirectory.deleteRecursively()
+                    println("clear all aars in $repoDirectory $deleteRecursively".red)
+                }
             }
-            println("startParameter: >>>>>  ${it.args}")
+            println("startParameter: >>>>>  ${it.args}".blue)
         }
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
         projectEvaluationListener(settings, replaceExtension)
@@ -91,12 +97,12 @@ class ReplaceSettings() : Plugin<Settings> {
                     project.readApiProjectDependencies()
                     replaceRootTask(project)
                     localMaven = project.collectLocalMaven(replaceExtension.srcProject)
-                    val length = localMaven.map { it.key.length }.max()
+                    val length = localMaven.map { it.key.length }.maxOrNull() ?: 1
                     println(
                         "【${project.name}】localMaven size:${localMaven.size} ${
                             localMaven.map { it }.joinToString("\n", "\n") {
                                 val projectName = "【${it.key}】"
-                                "${projectName.padEnd(length * 2, '-')}-> ${it.value}"
+                                "${projectName.padEnd(length + 6, '-')}-> ${it.value}"
                             }
                         }".blue
                     )

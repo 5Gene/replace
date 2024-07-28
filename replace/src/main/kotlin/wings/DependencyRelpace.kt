@@ -106,14 +106,14 @@ private fun transitiveByApiProject(
  *
  * 依赖的project替换为远端依赖
  */
-private fun Project.doProjectToModuleInDependency(srcProjects: List<String>): Pair<List<String>?, MutableMap<String, String>?> {
+private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<String>): Pair<List<String>?, MutableMap<String, String>?> {
     //需要补充的本地依赖，所有本地依赖中还剩下哪些没被依赖，app模块需要用
     val projectName = name
     val usedSrcProjectsWithConfig = mutableMapOf<String, MutableSet<String>>()
     val replenishLocalMavenAarsWithConfig = mutableMapOf<String, MutableMap<String, String>>()
     configurations.forEach {
         val configName = it.name
-        val configTag = "【$projectName】> $configName > doProjectToModuleInDependency >>"
+        val configTag = "【$projectName】> $configName > doProjectToAarInDependency >>"
         println("$configTag configurations-> ${it.name}")
         val usedSrcProjects = usedSrcProjectsWithConfig.getOrPut(configName) { mutableSetOf() }
         val replenishLocalMavenAars = replenishLocalMavenAarsWithConfig.getOrPut(configName) { localMaven.toMutableMap() }
@@ -149,7 +149,7 @@ private fun Project.doProjectToModuleInDependency(srcProjects: List<String>): Pa
     return replenishSrcProjects to replenishLocalMavenAarsWithConfig["implementation"]
 }
 
-fun Project.projectToModuleInDependency(srcProjects: List<String>) {
+fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
     if (localMaven.isEmpty()) {
         println("projectToModuleInDependency -> project(${project.identityPath()}) No LocalMaven so current is the first Build".green)
         return
@@ -158,8 +158,8 @@ fun Project.projectToModuleInDependency(srcProjects: List<String>) {
         //源码依赖，添加本地仓库
         project.addLocalMaven()
     }
-    val multableSrcProjects = srcProjects.toMutableList()
-    val replenish = doProjectToModuleInDependency(multableSrcProjects)
+    val mutableSrcProjects = srcProjects.toMutableList()
+    val replenish = doProjectToExternalModuleInDependency(mutableSrcProjects)
     if (isAndroidApplication()) {
         //可能存在 app--C, 而 C--A,(而C发布aar的时候依赖不包含A) app没直接依赖A,导致app打包没把A加进去
         replenish.second?.forEach {

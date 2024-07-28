@@ -21,7 +21,6 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
     if (!pluginManager.hasPlugin("maven-publish")) {
         pluginManager.apply("maven-publish")
     }
-    val isKsp = isKspCompilerModel()
     val projectName = name
     if (localMaven.isEmpty()) {
         //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
@@ -37,7 +36,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
             }
         }
     } else {
-        projectToModuleInDependency(srcProject)
+        projectToExternalModuleInDependency(srcProject)
     }
 
     println("${this@publishAar.name} config publishAar -> ${project.displayName}")
@@ -52,11 +51,6 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
             }
             register("Spark", MavenPublication::class.java) {
                 groupId = aar_group
-                if (isKsp) {
-
-                } else {
-
-                }
                 //artifactId = name
                 version = aar_version
                 (components.findByName("kotlin") ?: components.findByName("java"))?.let {

@@ -29,7 +29,7 @@ import wings.ignoreReplace
 import wings.isAndroidApplication
 import wings.isRootProject
 import wings.localMaven
-import wings.projectToModuleInDependency
+import wings.projectToExternalModuleInDependency
 import wings.publishAar
 import wings.readApiProjectDependencies
 import wings.red
@@ -125,7 +125,7 @@ class ReplaceSettings() : Plugin<Settings> {
                 if (isSrcProject || project.isAndroidApplication()) {
                     //源码依赖的project才需要
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
-                    project.projectToModuleInDependency(replaceExtension.srcProject)
+                    project.projectToExternalModuleInDependency(replaceExtension.srcProject)
                     project.repositories.forEach {
                         println("afterEvaluate repositories >${project.name} ${it.name}")
                     }

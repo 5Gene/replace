@@ -82,7 +82,6 @@ class ReplaceSettings() : Plugin<Settings> {
             override fun settingsEvaluated(settings: Settings) {
                 showLog = replaceExtension.logable
                 println("=========================== 📸 $showLog 📸 ===========================".purple)
-
             }
 
             override fun projectsLoaded(gradle: Gradle) {

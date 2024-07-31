@@ -30,18 +30,22 @@ import wings.ignoreReplace
 import wings.isAndroidApplication
 import wings.isRootProject
 import wings.localMaven
+import wings.log
 import wings.projectToExternalModuleInDependency
 import wings.publishAar
+import wings.purple
 import wings.readApiProjectDependencies
 import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
+import wings.showLog
 import wings.toRepoDirectory
 import wings.yellow
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
-    fun srcProject(vararg name: String) {
+    var logable: Boolean = false
+    fun focus(vararg name: String) {
         srcProject.addAll(name)
     }
 }
@@ -56,10 +60,11 @@ class ReplaceSettings() : Plugin<Settings> {
 
     var buildCommand = ""
 
-
     override fun apply(settings: Settings) {
-//        println(flowScope)
+//        log(flowScope)
 //        flowProviders.buildWorkResult.get()
+        val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
+
         settings.gradle.startParameter.taskRequests.forEach {
             //app:clean, app:assembleOplusReleaseT
             if (it.args.isNotEmpty()) {
@@ -72,10 +77,12 @@ class ReplaceSettings() : Plugin<Settings> {
             }
             println("startParameter: >>>>>  ${it.args}".yellow)
         }
-        val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
         projectEvaluationListener(settings, replaceExtension)
         settings.gradle.addBuildListener(object : BuildListener {
             override fun settingsEvaluated(settings: Settings) {
+                showLog = replaceExtension.logable
+                println("=========================== 📸 $showLog 📸 ===========================".purple)
+
             }
 
             override fun projectsLoaded(gradle: Gradle) {
@@ -100,7 +107,7 @@ class ReplaceSettings() : Plugin<Settings> {
                     replaceRootTask(project)
                     localMaven = project.collectLocalMaven(replaceExtension.srcProject)
                     val length = localMaven.map { it.key.length }.maxOrNull() ?: 1
-                    println(
+                    log(
                         "【${project.name}】localMaven size:${localMaven.size} ${
                             localMaven.map { it }.joinToString("\n", "\n") {
                                 val projectName = "【${it.key}】"
@@ -112,7 +119,7 @@ class ReplaceSettings() : Plugin<Settings> {
                 if (localMaven.isNotEmpty()) {
                     if (localMaven.keys.contains(project.name)) {
                         val remove = project.rootProject.subprojects.remove(project)
-                        println("beforeEvaluate -> remove ${project}: $remove".yellow)
+                        log("beforeEvaluate -> remove ${project}: $remove".yellow)
                     }
                 }
             }
@@ -121,28 +128,28 @@ class ReplaceSettings() : Plugin<Settings> {
                 //是否是源码依赖项目
                 val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
-                println("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ".darkGreen)
-                println("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
+                log("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ".darkGreen)
+                log("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
                     //源码依赖的project才需要
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
                     project.projectToExternalModuleInDependency(replaceExtension.srcProject)
                     project.repositories.forEach {
-                        println("afterEvaluate repositories >${project.name} ${it.name}")
+                        log("afterEvaluate repositories >${project.name} ${it.name}")
                     }
                     return
                 }
                 val ignoreReplace = project.ignoreReplace()
                 if (ignoreReplace != null) {
-                    println("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
+                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
                     project.repositories.forEach {
-                        println("afterEvaluate repositories >${project.name} ${it.name}".yellow)
+                        log("afterEvaluate repositories >${project.name} ${it.name}".yellow)
                     }
                     return
                 }
                 if (project.name.startsWith("0_")) {
-                    println("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
+                    log("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
                     return
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
@@ -155,7 +162,7 @@ class ReplaceSettings() : Plugin<Settings> {
                     project.tasks.findByName("preBuild")
                         ?: project.tasks.findByName("compileKotlin")
                         ?: project.tasks.findByName("compileJava")
-                println("${project.name} firstBuildTask -> $firstBuildTask")
+                log("${project.name} firstBuildTask -> $firstBuildTask")
                 firstBuildTask?.finalizedBy(publishTask)
             }
         })

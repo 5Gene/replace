@@ -18,11 +18,11 @@ private fun findDiffProjects(): MutableSet<String> {
     //找到对应修改的模块，然后删除对应的LocalMaven
     //basic/uikit/src/main/java/com/learn/uikit/UIKitActivity.kt
     val diffProjects = diffFiles.mapNotNull {
-        println("updateLocalMaven: diff : $it")
+        log("updateLocalMaven: diff : $it")
         findProjectNameRegex.find("/$it")?.groupValues?.get(1)
     }.distinct().toMutableSet()
 
-    println("updateLocalMaven: diffProjects -> $diffProjects".yellow)
+    log("updateLocalMaven: diffProjects -> $diffProjects".yellow)
     return diffProjects
 }
 
@@ -31,7 +31,7 @@ private fun gitUpdateTask(rootProject: Project) {
         group = "replace update"
         dependsOn("updateLocalMaven")
         doLast {
-//            println("git rebase".exec())//本地有修改无法执行rebase
+//            log("git rebase".exec())//本地有修改无法执行rebase
             println("git pull".exec())
 //            "./gradlew :app:assembleDebug".exec()
         }

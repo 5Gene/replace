@@ -1,11 +1,17 @@
 package wings
 
-import org.gradle.api.Project
-
 
 //fun Project.log(msg: String) {
 //    //🎉 📣 🎗️ 🔥 📜 💯 📸 🎲 🚀 💡 🔔 🔪 🐼 ✨
 //
-//    //    println("🎗️ $name >>> $msg".yellow)
-//    println("🔪 $name--> tid:${Thread.currentThread().id} $msg".yellow)
+//    //    log("🎗️ $name >>> $msg".yellow)
+//    log("🔪 $name--> tid:${Thread.currentThread().id} $msg".yellow)
 //}
+
+var showLog: Boolean = false
+
+fun log(log: String) {
+    if (showLog) {
+        println(log)
+    }
+}

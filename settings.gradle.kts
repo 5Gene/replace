@@ -30,17 +30,13 @@ plugins {
     id("io.github.5hmlA.replace")
 }
 
-//includeBuild("$rootPath/$name") {
-//	dependencySubstitution {
-//		substitute(module("$group:$name")).with(project(":"))
-//	}
-//}
 
 replace {
-    srcProject(
+    logable = false
+    focus(
 //        ":feature:home",
         ":feature:profile",
-//        ":net-repository",
+        ":net-repository",
         ":kt",
 //        ":basic:uikit"
     )
@@ -55,4 +51,4 @@ include(":feature:profile")
 include(":kt")
 include(":net-repository-anno")
 include(":net-repository")
-include(":feature:0_middle")
+//include(":feature:0_middle")

@@ -30,14 +30,14 @@ fun Settings.include2(projectPath: String, srcProject: Boolean = false) {
     }
     val name = projectPath.substring(projectPath.lastIndexOf(':') + 1)
     localMaven[name]?.let {
-        println("replace-> $projectPath already has aar, ignore")
+        log("replace-> $projectPath already has aar, ignore")
     } ?: include(projectPath)
 }
 
 //https://docs.gradle.org/current/userguide/dependency_verification.html
 fun DependencyHandler.replace(path: String): kotlin.Any {
     val name = path.substring(path.lastIndexOf(':') + 1)
-    println("replace-> $path - $name >> $localMaven")
+    log("replace-> $path - $name >> $localMaven")
     return localMaven[name] ?: project(path)
 }
 
@@ -49,7 +49,7 @@ fun Project.isAndroidApplication() = pluginManager.hasPlugin("com.android.applic
 
 fun Project.isKspCompilerModel() = configurations.any {
     it.dependencies.any {
-        it.group == "com.google.devtools.ksp"||(it.group == "io.github.5gene" && it.name == "ksp-poe")
+        it.group == "com.google.devtools.ksp" || (it.group == "io.github.5gene" && it.name == "ksp-poe")
     }
 }
 
@@ -85,12 +85,12 @@ private fun transitiveByApiProject(
                 //依赖的依赖是源码
                 if (usedSrcProjects.add(findSrcProject)) {
                     toProject.dependencies.add(configName, toProject.dependencies.project(findSrcProject))
-                    println("$tag $configName(project($findSrcProject)) to ${toProject.name} by transitive from $addProjectName $config dependency".green)
+                    log("$tag $configName(project($findSrcProject)) to ${toProject.name} by transitive from $addProjectName $config dependency".green)
                 }
             } else {
                 val transitiveAar = replenishLocalMavenAars.remove(projectName)
                 if (transitiveAar != null) {
-                    println("$tag $configName($transitiveAar) to ${toProject.name} by transitive from $addProjectName $config dependency".green)
+                    log("$tag $configName($transitiveAar) to ${toProject.name} by transitive from $addProjectName $config dependency".green)
                     toProject.dependencies.add(configName, transitiveAar)
                     //查看此模块内所api的project传递到此处
                     transitiveByApiProject(tag, projectName, srcProjects, usedSrcProjects, replenishLocalMavenAars, configName, toProject)
@@ -114,7 +114,7 @@ private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<Stri
     configurations.forEach {
         val configName = it.name
         val configTag = "【$projectName】> $configName > doProjectToAarInDependency >>"
-        println("$configTag configurations-> ${it.name}")
+        log("$configTag configurations-> ${it.name}")
         val usedSrcProjects = usedSrcProjectsWithConfig.getOrPut(configName) { mutableSetOf() }
         val replenishLocalMavenAars = replenishLocalMavenAarsWithConfig.getOrPut(configName) { localMaven.toMutableMap() }
         //afterEvaluate中执行dependencies已经有数据了
@@ -124,7 +124,7 @@ private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<Stri
             val containSrcProjectDependency = srcProjects.contains(projectDependency.findIdentityPath())
             if (containSrcProjectDependency) {
                 usedSrcProjects.add(projectDependency.findIdentityPath())
-                println("$configTag $configName(project(${projectDependency.findIdentityPath()})) is src project".green)
+                log("$configTag $configName(project(${projectDependency.findIdentityPath()})) is src project".green)
             } else {
                 //非源码模块，则映射为LocalMaven的aar依赖，并便利其api依赖到此
                 localMaven[projectDependency.name]?.let { aar ->
@@ -133,13 +133,13 @@ private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<Stri
                     it.dependencies.remove(projectDependency)
                     val transitiveAar = replenishLocalMavenAars.remove(projectDependency.name)
                     if (transitiveAar != null) {
-                        println("$configTag $configName($transitiveAar) to $projectName".green)
+                        log("$configTag $configName($transitiveAar) to $projectName".green)
                         dependencies.add(configName, transitiveAar)
                         //查看此模块内所api的project传递到此处
                         transitiveByApiProject(configTag, projectDependency.name, srcProjects, usedSrcProjects, replenishLocalMavenAars, configName, this)
                     }
                 } ?: run {
-                    println("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".blue)
+                    log("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".blue)
                 }
             }
 
@@ -151,7 +151,7 @@ private fun Project.doProjectToExternalModuleInDependency(srcProjects: List<Stri
 
 fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
     if (localMaven.isEmpty()) {
-        println("projectToModuleInDependency -> project(${project.identityPath()}) No LocalMaven so current is the first Build".green)
+        log("projectToModuleInDependency -> project(${project.identityPath()}) No LocalMaven so current is the first Build".green)
         return
     }
     if (repositories.size > 0) {
@@ -165,9 +165,9 @@ fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
         replenish.second?.forEach {
             val isKsp = kspProjects.any { ksp -> it.value.contains(":$ksp:") }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project 【${it.value}】".blue)
+                log("【$name】 -> replenish ignore ksp project 【${it.value}】".blue)
             } else {
-                println("【$name】 -> replenish ${it.key} runtimeOnly(${it.value}) for ${project.name}".green)
+                log("【$name】 -> replenish ${it.key} runtimeOnly(${it.value}) for ${project.name}".green)
                 project.dependencies.add("runtimeOnly", it.value)
             }
         }
@@ -175,10 +175,10 @@ fun Project.projectToExternalModuleInDependency(srcProjects: List<String>) {
         replenish.first?.forEach {
             val isKsp = kspProjects.any { ksp -> it.contains(ksp) }
             if (isKsp) {
-                println("【$name】 -> replenish ignore ksp project 【$it】".blue)
+                log("【$name】 -> replenish ignore ksp project 【$it】".blue)
             } else {
                 project.dependencies.add("runtimeOnly", project.dependencies.project(it))
-                println("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".blue)
+                log("【$name】 -> replenish src project > runtimeOnly(${it}) for ${project.name}".blue)
             }
         }
     }
@@ -189,9 +189,17 @@ fun Project.addLocalMaven() {
         return
     }
     repositories {
-        maven {
-            name = "aar"
-            setUrl(toLocalRepoDirectory().path)
+        //限定只允许本地依赖group为aar_group的依赖访问此仓库，其他不允许访问
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "aar"
+                    setUrl(toLocalRepoDirectory().path)
+                }
+            }
+            filter {
+                includeGroup(aar_group)
+            }
         }
     }
 }

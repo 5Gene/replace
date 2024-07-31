@@ -32,14 +32,14 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                 //project模块只有aar也在这,不好判断
                 val dependProjects = configProjectDeps.getOrPut(configName) { mutableSetOf() }
                 dependProjects.add(dependency.name)
-                println("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${configProjectDependencices[projectName]}".blue)
+                log("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${configProjectDependencices[projectName]}".blue)
             }
         }
     } else {
         projectToExternalModuleInDependency(srcProject)
     }
 
-    println("${this@publishAar.name} config publishAar -> ${project.displayName}")
+    log("${this@publishAar.name} config publishAar -> ${project.displayName}")
     val publishingExtension = extensions.getByType<PublishingExtension>()
     publishingExtension.apply {
         publications {
@@ -55,7 +55,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                 version = aar_version
                 (components.findByName("kotlin") ?: components.findByName("java"))?.let {
                     from(it)
-                    println("【${this@publishAar.name}】 config publishAar -> component【${it.name}】for ${project.displayName}".green)
+                    log("【${this@publishAar.name}】 config publishAar -> component【${it.name}】for ${project.displayName}".green)
                 } ?: afterEvaluate {
                     //buildCommand格式为productFlavor+buildType
                     val component = components.find { buildCommand.endsWith(it.name) }
@@ -64,9 +64,9 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                     from(component.toNoProjectDependencySoftwareComponentContainer())
                     components.forEach {
                         //这里最好结合buildFlavor
-                        println("【${this@publishAar.name}】 -> ${project.displayName} with component ${it.name}")
+                        log("【${this@publishAar.name}】 -> ${project.displayName} with component ${it.name}")
                     }
-                    println("【${this@publishAar.name}】 config publishAar -> component【${component?.name}】 for ${project.displayName}".green)
+                    log("【${this@publishAar.name}】 config publishAar -> component【${component?.name}】 for ${project.displayName}".green)
                 }
             }
         }
@@ -87,7 +87,7 @@ class NoProjectDependencyUsageContext(val usages: UsageContext) : UsageContext {
     }
 
     override fun getDependencies(): MutableSet<out ModuleDependency> {
-        println("-> hook  NoProjectDependencyUsageContext => getDependencies")
+        log("-> hook  NoProjectDependencyUsageContext => getDependencies")
         //只保留远程依赖
         //本地Project依赖忽略 > DefaultProjectDependency 正常module也包括只有aar的模块
         //本地文件依赖忽略 > DefaultSelfResolvingDependency -> 依赖的文件依赖的jar,依赖的模块只有文件aar

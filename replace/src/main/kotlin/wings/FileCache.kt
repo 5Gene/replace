@@ -19,9 +19,9 @@ fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
         //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
         if (!srcProject.any { it.endsWith(":$name") }) {
             map[name] = "$aar_group:$name:$aar_version"
-            println("collectLocalMaven 【$name】 -> ${map[name]}")
+            log("collectLocalMaven 【$name】 -> ${map[name]}")
         } else {
-            println("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+            log("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
         }
     }
     return map
@@ -34,7 +34,7 @@ fun Project.saveApiProjectDependencies() {
         cache.createNewFile()
     }
     cache.writeText(JsonOutput.toJson(configProjectDependencices))
-    println("save configProjectDependencices -> $configProjectDependencices".blue)
+    log("save configProjectDependencices -> $configProjectDependencices".blue)
 }
 
 fun Project.readApiProjectDependencies() {
@@ -53,7 +53,7 @@ fun Project.readApiProjectDependencies() {
             }
             configProjectDependencices[p] = configDeps
         }
-        println("ksp projects -> $kspProjects".blue)
-        println("read configProjectDependencices -> $configProjectDependencices".blue)
+        log("ksp projects -> $kspProjects".blue)
+        log("read configProjectDependencices -> $configProjectDependencices".blue)
     }
 }

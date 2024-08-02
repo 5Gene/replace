@@ -32,7 +32,6 @@ plugins {
 
 
 replace {
-    logable = false
     focus(
 //        ":feature:home",
         ":feature:profile",

@@ -1,3 +1,6 @@
+import wing.gradlePluginSet
+import wing.sourceJarEmpty
+
 plugins {
     `kotlin-dsl`
 //    `kotlin-dsl-precompiled-script-plugins`
@@ -6,6 +9,13 @@ plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "1.2.1"
     id("maven-publish")
+}
+
+
+buildscript {
+    dependencies {
+        classpath(wings.conventions)
+    }
 }
 
 //主动开启Junit,system.out日志输出显示在控制台,默认控制台不显示system.out输出的日志
@@ -53,58 +63,23 @@ dependencies {
 
 //group = "osp.sparkj.plugin"
 group = "io.github.5hmlA"
-version = "0.0.3"
+version = "0.0.3.1"
 
-publishing {
-    repositories {
-        maven {
-            name = "GithubPackages"
-            url = uri("https://maven.pkg.github.com/5hmlA/sparkj")
-            credentials {
-                username = System.getenv("GITHUB_USER")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-        maven {
-            //name会成为任务名字的一部分 publishOspPublicationTo [LocalTest] Repository
-            name = "LocalTest"
-            setUrl("${rootDir}/repo")
-        }
+tasks.whenTaskAdded {
+    println("whenTaskAdded -> $name > ${this::class.simpleName} ")
+    dependsOn.forEach {
+        println(it)
     }
 }
 
-//插件推送之前 先去掉不符合规范的插件
-tasks.findByName("publishPlugins")?.doFirst {
-    //doFirst on task ':conventions:publishPlugins'
-    ">> doFirst on $this ${this.javaClass}".print()
-    //不太明白为什么这里也报错 Extension of type 'GradlePluginDevelopmentExtension' does not exist
-    //因为取错对象的extensions了，这里的this是com.gradle.publish.PublishTask_Decorated, 这个task也有extensions
-    val plugins = rootProject.extensions.getByType<GradlePluginDevelopmentExtension>().plugins
-    plugins.removeIf {
-        //移除不能上传的插件
-        it.displayName.isNullOrEmpty()
-    }
-    plugins.forEach {
-        "- plugin to publish > ${it.name} ${it.id} ${it.displayName}".print()
+sourceJarEmpty()
+
+gradlePluginSet {
+    register("aar-replace") {
+        id = "${group}.replace"
+        displayName = "aar replace module plugin"
+        description = "significantly reducing the compilation time"
+        tags = listOf("aar", "LocalMaven")
+        implementationClass = "ReplaceSettings"
     }
 }
-
-gradlePlugin {
-    website = "https://github.com/zzgene/replace"
-    vcsUrl = "https://github.com/zzgene/replace"
-    plugins {
-        register("aar-replace") {
-            id = "${group}.replace"
-            displayName = "aar replace module plugin"
-            description = "significantly reducing the compilation time"
-            tags = listOf("aar", "LocalMaven")
-            implementationClass = "ReplaceSettings"
-        }
-    }
-
-    "插件地址: https://plugins.gradle.org/u/ZuYun".print()
-//    https://plugins.gradle.org/docs/mirroring
-//    The URL to mirror is https://plugins.gradle.org/m2/
-    "插件下载地址: https://plugins.gradle.org/m2/".print()
-}
-

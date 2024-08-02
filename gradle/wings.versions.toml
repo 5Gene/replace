@@ -7,7 +7,7 @@ adapter = "2023.10.13"
 spark = "2023.12.08"
 surery = "2024.06.06"
 
-conventions = "2.1.6"
+conventions = "2.1.7.1"
 auto-service = "0.0.8"
 view-dsl = "0.0.1"
 ksp-poe = "0.0.2"

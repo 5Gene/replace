@@ -44,7 +44,6 @@ import wings.yellow
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
-    var logable: Boolean = false
     fun focus(vararg name: String) {
         srcProject.addAll(name)
     }
@@ -80,11 +79,11 @@ class ReplaceSettings() : Plugin<Settings> {
         projectEvaluationListener(settings, replaceExtension)
         settings.gradle.addBuildListener(object : BuildListener {
             override fun settingsEvaluated(settings: Settings) {
-                showLog = replaceExtension.logable
-                println("=========================== 📸 $showLog 📸 ===========================".purple)
             }
 
             override fun projectsLoaded(gradle: Gradle) {
+                showLog = settings.gradle.rootProject.findProperty("replace.log") == "true"
+                println("=========================== 📸 $showLog 📸 ===========================".purple)
             }
 
             override fun projectsEvaluated(gradle: Gradle) {

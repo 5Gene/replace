@@ -102,7 +102,6 @@ class NetRepositorySymbolProcessor(private val environment: SymbolProcessorEnvir
         val retrofit = "gene.net.repository.retrofitProvider".topLevelFunc()
         val objectBuilder = TypeSpec
             .objectBuilder("${dataStruct.fileName}NetSource")
-            .addSuperinterface(ClassName(dataStruct.packageName, netApiClassName))
             .addProperty(
                 PropertySpec.builder(
                     "retrofit",
@@ -158,7 +157,6 @@ class NetRepositorySymbolProcessor(private val environment: SymbolProcessorEnvir
             val (retrofitFunBuild, paramStrs) = retrofitFunBuild(funName, list.toBoolean(), it.ksClass, netResultClassName, true, paths)
             objectBuilder.addFunction(
                 retrofitFunBuild
-                    .addModifiers(KModifier.OVERRIDE)//复写的方法
                     .addCode(buildCodeBlock {
 //                        +"java.lang.System.currentTimeMillis()"
 //                        "val ret = gene.net.repository.retrofitProvider().create"("com.example.ksptt.DataPacksNetApi::class.java")

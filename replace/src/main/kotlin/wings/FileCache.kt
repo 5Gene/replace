@@ -3,6 +3,7 @@ package wings
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
+import org.gradle.api.initialization.Settings
 import java.io.File
 
 fun File.toRepoDirectory() = File(this, "build/aars")
@@ -19,6 +20,22 @@ fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
         //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
         if (!srcProject.any { it.endsWith(":$name") }) {
             map[name] = "$aar_group:$name:$aar_version"
+            log("collectLocalMaven 【$name】 -> ${map[name]}")
+        } else {
+            log("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+        }
+    }
+    return map
+}
+
+internal fun File.collectLocalMaven(srcProject: List<String>, settings: Settings): Map<String, String> {
+    val map = mutableMapOf<String, String>()
+    toRepoDirectory().walk().filter { it.isDirectory }.filter { it.parentFile.name == aar_group }.forEach {
+        val name = it.name
+        //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
+        if (!srcProject.any { it.endsWith(":$name") }) {
+            map[name] = "$aar_group:$name:$aar_version"
+            settings.remove(name)
             log("collectLocalMaven 【$name】 -> ${map[name]}")
         } else {
             log("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)

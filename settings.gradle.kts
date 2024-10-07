@@ -2,7 +2,7 @@ rootProject.name = "Replace-main"
 
 pluginManagement {
     includeBuild("replace") {
-        name = "conventions"
+        name = "replace"
     }
     repositories {
         google()
@@ -10,6 +10,12 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+plugins {
+    id("io.github.5hmlA.vcl") version "24.10.01"
+    id("io.github.5hmlA.replace")
+}
+
 dependencyResolutionManagement {
     versionCatalogs {
         create("wings") {
@@ -26,10 +32,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-plugins {
-    id("io.github.5hmlA.replace")
-}
-
 
 replace {
     focus(

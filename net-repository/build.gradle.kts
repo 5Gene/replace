@@ -1,26 +1,22 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import wing.publishJavaMavenCentral
-
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(vcl.plugins.kotlin.jvm)
     alias(wings.plugins.dev.ksp)
 }
 
 buildscript {
     dependencies {
-        classpath(wings.conventions)
+        classpath(vcl.gene.conventions)
     }
 }
 
 kotlin {
     // Or shorter:
-    jvmToolchain(17)
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-        freeCompilerArgs.add("-Xcontext-receivers")
+//    jvmToolchain(17)
+//    compilerOptions {
+//        jvmTarget.set(JvmTarget.JVM_17)
 //        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
 //        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-    }
+//    }
 }
 
 //https://kotlinlang.org/docs/ksp-incremental.html#aggregating-vs-isolating

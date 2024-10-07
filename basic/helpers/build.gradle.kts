@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(wings.plugins.android)
+    alias(vcl.plugins.android.library)
+    alias(vcl.plugins.gene.android)
 }
 
 android {
@@ -11,8 +11,4 @@ android {
             isMinifyEnabled = false
         }
     }
-}
-
-dependencies {
-    implementation(libs.androidx.core.ktx)
 }

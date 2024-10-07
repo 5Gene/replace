@@ -28,7 +28,6 @@ import june.ksp.poe.addAnnoParams
 import june.ksp.poe.paramWithMap
 import june.ksp.poe.toClassName
 import june.ksp.poe.topLevelFunc
-import june.ksp.poe.unaryPlus
 import june.ksp.readAnnotations
 
 const val NET_SOURCE_ANNO = "gene.net.repository.NetSource"
@@ -163,8 +162,7 @@ class NetRepositorySymbolProcessor(private val environment: SymbolProcessorEnvir
 //                        "gene.net.repository.retrofitProvider".invokeTopLevelFunc()
 //                       "java.lang.System.currentTimeMillis".invokeJavaStaticFunc()
                         if (extra.isEmpty()) {
-//                            add("return retrofit.%N(${paramStrs})\n",funName)
-                            +"return retrofit.$funName(${paramStrs})"
+                            add("return retrofit.%N(${paramStrs})\n", funName)
                         } else {
                             add("return %M(%S).create(%N::class.java).%N(${paramStrs})\n", retrofit, extra, netApiClassName, funName)
                         }

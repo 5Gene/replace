@@ -1,8 +1,8 @@
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(wings.plugins.compose)
-    alias(libs.plugins.ksp)
+    alias(vcl.plugins.android.application)
+    alias(vcl.plugins.gene.compose)
+    alias(vcl.plugins.ksp)
 }
 
 

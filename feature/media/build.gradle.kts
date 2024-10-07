@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(wings.plugins.compose)
+    alias(vcl.plugins.android.library)
+    alias(vcl.plugins.gene.compose)
 }
 
 android {

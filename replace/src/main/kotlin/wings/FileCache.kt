@@ -10,9 +10,17 @@ fun File.toRepoDirectory() = File(this, "build/aars")
 
 fun Project.toLocalRepoDirectory() = rootDir.toRepoDirectory()
 
-fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
+fun Project.collectLocalMaven(srcProject: MutableList<String>): Map<String, String> {
     if (!isRootProject()) {
         throw RuntimeException("not root project")
+    }
+    try {
+        if (srcProject.isEmpty()) {
+            srcProject.addAll(findDiffProjects())
+            logI("collectLocalMaven: no config src projects, default by diff, src project: $srcProject".red)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
     val map = mutableMapOf<String, String>()
     toLocalRepoDirectory().walk().filter { it.isDirectory }.filter { it.parentFile.name == aar_group }.forEach {
@@ -20,9 +28,9 @@ fun Project.collectLocalMaven(srcProject: List<String>): Map<String, String> {
         //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
         if (!srcProject.any { it.endsWith(":$name") }) {
             map[name] = "$aar_group:$name:$aar_version"
-            log("collectLocalMaven 【$name】 -> ${map[name]}")
+            logI("collectLocalMaven 【$name】 -> ${map[name]}")
         } else {
-            log("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+            logI("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
         }
     }
     return map
@@ -36,9 +44,9 @@ internal fun File.collectLocalMaven(srcProject: List<String>, settings: Settings
         if (!srcProject.any { it.endsWith(":$name") }) {
             map[name] = "$aar_group:$name:$aar_version"
             settings.remove(name)
-            log("collectLocalMaven 【$name】 -> ${map[name]}")
+            logI("collectLocalMaven 【$name】 -> ${map[name]}")
         } else {
-            log("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+            logI("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
         }
     }
     return map
@@ -51,11 +59,11 @@ fun Project.saveApiProjectDependencies() {
         cache.createNewFile()
     }
     cache.writeText(JsonOutput.toJson(configProjectDependencices))
-    log("save configProjectDependencices -> $configProjectDependencices".blue)
+    logI("save configProjectDependencies -> $configProjectDependencices".blue)
 }
 
 fun Project.readApiProjectDependencies() {
-    val cache = File(rootProject.toLocalRepoDirectory(), ".configProjectDependencices")
+    val cache = File(rootProject.toLocalRepoDirectory(), ".configProjectDependencies")
     if (cache.exists()) {
         //project, Map<config,project>
         //class java.util.ArrayList cannot be cast to class java.util.Set (java.util.ArrayList and java.util.Set are in module java.base of loader 'bootstrap')
@@ -70,7 +78,7 @@ fun Project.readApiProjectDependencies() {
             }
             configProjectDependencices[p] = configDeps
         }
-        log("ksp projects -> $kspProjects".blue)
-        log("read configProjectDependencices -> $configProjectDependencices".blue)
+        logI("ksp projects -> $kspProjects".blue)
+        logI("read configProjectDependencies -> $configProjectDependencices".blue)
     }
 }

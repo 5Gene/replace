@@ -2,7 +2,7 @@ package wings
 
 import org.gradle.api.Project
 
-val findProjectNameRegex = """/(\w+)/src/""".toRegex()
+val findProjectNameRegex = """(.*)/src/""".toRegex()
 
 fun Project.getPublishTask() = tasks.getByName("publishSparkPublicationToAarRepository")
 
@@ -11,18 +11,18 @@ fun replaceRootTask(rootProject: Project) {
     gitUpdateTask(rootProject)
 }
 
-private fun findDiffProjects(): MutableSet<String> {
+fun findDiffProjects(): MutableSet<String> {
     //rootProject.rootDir.toLocalRepoDirectory().deleteRecursively()
     //通过git指令判断和远端最新代码相比哪些文件有修改
     val diffFiles = diffWithHead()
     //找到对应修改的模块，然后删除对应的LocalMaven
     //basic/uikit/src/main/java/com/learn/uikit/UIKitActivity.kt
     val diffProjects = diffFiles.mapNotNull {
-        log("updateLocalMaven: diff : $it")
-        findProjectNameRegex.find("/$it")?.groupValues?.get(1)
+        logI("updateLocalMaven: diff : $it")
+        findProjectNameRegex.find("/$it")?.groupValues?.get(1)?.replace("/", ":")
     }.distinct().toMutableSet()
 
-    log("updateLocalMaven: diffProjects -> $diffProjects".yellow)
+    logI("updateLocalMaven: diffProjects -> $diffProjects".yellow)
     return diffProjects
 }
 
@@ -42,11 +42,13 @@ private fun gitCleanTask(rootProject: Project) {
     rootProject.tasks.register("updateLocalMaven") {
         group = "replace update"
         doLast {
-            val diffProjects = findDiffProjects()
+            val diffProjects = findDiffProjects().map {
+                it.substring(it.lastIndexOf(":") + 1)
+            }.toMutableList()
             rootProject.toLocalRepoDirectory().walk().filter {
                 it.isDirectory && diffProjects.remove(it.name)
             }.forEach {
-                println("updateLocalMaven: LocalMaven clean -> delete:${it.name} ${it.deleteRecursively()},dir: ${it.absolutePath}".green)
+                logI("updateLocalMaven: LocalMaven clean -> delete:${it.name} ${it.deleteRecursively()},dir: ${it.absolutePath}".green)
             }
         }
     }

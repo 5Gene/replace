@@ -52,7 +52,6 @@ dependencies {
 
 }
 
-//group = "osp.sparkj.plugin"
 group = "io.github.5hmlA"
 version = wings.versions.replace.get()
 

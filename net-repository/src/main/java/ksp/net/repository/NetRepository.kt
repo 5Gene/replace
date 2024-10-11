@@ -30,7 +30,7 @@ import june.ksp.poe.toClassName
 import june.ksp.poe.topLevelFunc
 import june.ksp.readAnnotations
 
-const val NET_SOURCE_ANNO = "gene.net.repository.NetSource"
+const val NET_SOURCE_ANNO = "gene.net.repository.anno.NetSource"
 
 @AutoService(SymbolProcessorProvider::class)
 class NetRepositorySymbolProcessorProvider : SymbolProcessorProvider {

@@ -38,6 +38,7 @@ import wings.readApiProjectDependencies
 import wings.red
 import wings.replaceRootTask
 import wings.saveApiProjectDependencies
+import wings.showDebugLog
 import wings.showLog
 import wings.toRepoDirectory
 import wings.yellow
@@ -83,6 +84,7 @@ class ReplaceSettings() : Plugin<Settings> {
 
             override fun projectsLoaded(gradle: Gradle) {
                 showLog = settings.gradle.rootProject.findProperty("replace.log") == "true"
+                showDebugLog = settings.gradle.rootProject.findProperty("replace.log.debug") == "true"
                 println("=========================== 📸 $showLog 📸 ===========================".purple)
             }
 

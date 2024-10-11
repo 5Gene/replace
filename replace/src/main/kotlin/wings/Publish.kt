@@ -39,7 +39,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
         projectToExternalModuleInDependency(srcProject)
     }
 
-    log("${this@publishAar.name} config publishAar -> ${project.displayName}")
+    logI("${this@publishAar.name} config publishAar -> ${project.displayName}")
     val publishingExtension = extensions.getByType<PublishingExtension>()
     publishingExtension.apply {
         publications {
@@ -55,7 +55,7 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                 version = aar_version
                 (components.findByName("kotlin") ?: components.findByName("java"))?.let {
                     from(it)
-                    log("【${this@publishAar.name}】 config publishAar -> component【${it.name}】for ${project.displayName}".green)
+                    logI("【${this@publishAar.name}】 config publishAar -> component【${it.name}】for ${project.displayName}".green)
                 } ?: afterEvaluate {
                     //buildCommand格式为productFlavor+buildType
                     val component = components.find { buildCommand.endsWith(it.name) }
@@ -64,9 +64,9 @@ fun Project.publishAar(buildCommand: String, srcProject: MutableList<String>) {
                     from(component.toNoProjectDependencySoftwareComponentContainer())
                     components.forEach {
                         //这里最好结合buildFlavor
-                        log("【${this@publishAar.name}】 -> ${project.displayName} with component ${it.name}")
+                        logI("【${this@publishAar.name}】 -> ${project.displayName} with component ${it.name}")
                     }
-                    log("【${this@publishAar.name}】 config publishAar -> component【${component?.name}】 for ${project.displayName}".green)
+                    logI("【${this@publishAar.name}】 config publishAar -> component【${component?.name}】 for ${project.displayName}".green)
                 }
             }
         }

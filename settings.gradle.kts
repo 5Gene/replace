@@ -24,23 +24,19 @@ dependencyResolutionManagement {
     }
     repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
-//        maven {
-//            name = "aar"
-//            setUrl(rootDir.toLocalRepoDirectory().path)
-//        }
         google()
         mavenCentral()
     }
 }
 
 replace {
-    focus(
-//        ":feature:home",
-        ":feature:profile",
-        ":net-repository",
-        ":kt",
-//        ":basic:uikit"
-    )
+//    focus(
+////        ":feature:home",
+//        ":feature:profile",
+//        ":net-repository",
+//        ":kt",
+////        ":basic:uikit"
+//    )
 }
 
 include(":app")

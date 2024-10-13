@@ -1,10 +1,8 @@
 plugins {
-    id("java-library")
     alias(vcl.plugins.kotlin.jvm)
 }
 
-//java {
-//    sourceCompatibility = JavaVersion.VERSION_17
-//    targetCompatibility = JavaVersion.VERSION_17
-//}
-
+dependencies {
+    implementation(vcl.test.junit)
+    api(project(":lib"))
+}

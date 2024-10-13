@@ -21,27 +21,23 @@ import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
+import wings.DependencyReplace.projectToExternalModuleInDependency
+import wings.DependencyResolver
+import wings.GitUpdateAar
+import wings.GitUpdateAar.Companion.replaceRootTask
+import wings.Publish
+import wings.Publish.Local.localMaven
 import wings.blue
-import wings.collectLocalMaven
 import wings.darkGreen
-import wings.getPublishTask
-import wings.identityPath
-import wings.ignoreReplace
-import wings.isAndroidApplication
-import wings.isRootProject
-import wings.localMaven
+import wings.localRepoDirectory
 import wings.log
-import wings.projectToExternalModuleInDependency
-import wings.publishAar
+import wings.logI
 import wings.purple
-import wings.readApiProjectDependencies
 import wings.red
-import wings.replaceRootTask
-import wings.saveApiProjectDependencies
 import wings.showDebugLog
 import wings.showLog
-import wings.toRepoDirectory
 import wings.yellow
+import java.io.File
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -55,12 +51,15 @@ abstract class ReplaceExtension {
  * The settings script contains the list of modules applied to the project
  * which allows us to hook up on sub-project's creation.
  */
-class ReplaceSettings() : Plugin<Settings> {
+class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
 //class ReplaceSettings @Inject constructor(var flowScope: FlowScope, val flowProviders: FlowProviders) : Plugin<Settings> {
 
     var buildCommand = ""
 
     override fun apply(settings: Settings) {
+        println(settings.rootDir)
+        println(File("build").absolutePath)
+        localRepoDirectory = File(settings.rootDir, "build/aars")
 //        log(flowScope)
 //        flowProviders.buildWorkResult.get()
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
@@ -70,9 +69,8 @@ class ReplaceSettings() : Plugin<Settings> {
             if (it.args.isNotEmpty()) {
                 buildCommand = it.args.last()
                 if (it.args.any { it.contains("clean") }) {
-                    val repoDirectory = settings.rootDir.toRepoDirectory()
-                    val deleteRecursively = repoDirectory.deleteRecursively()
-                    println("clear all aars in $repoDirectory $deleteRecursively".blue)
+                    val deleteRecursively = localRepoDirectory.deleteRecursively()
+                    println("clear all aars in $localRepoDirectory $deleteRecursively".blue)
                 }
             }
             println("startParameter: >>>>>  ${it.args}".yellow)
@@ -93,7 +91,7 @@ class ReplaceSettings() : Plugin<Settings> {
 
             override fun buildFinished(result: BuildResult) {
                 if (localMaven.isEmpty()) {
-                    settings.gradle.rootProject.saveApiProjectDependencies()
+                    DependencyResolver.resolveDependencyPropagation(settings.gradle.rootProject)
                 }
             }
         })
@@ -103,11 +101,10 @@ class ReplaceSettings() : Plugin<Settings> {
         settings.gradle.addProjectEvaluationListener(object : ProjectEvaluationListener {
             override fun beforeEvaluate(project: Project) {
                 if (project.isRootProject()) {
-                    project.readApiProjectDependencies()
                     replaceRootTask(project)
                     localMaven = project.collectLocalMaven(replaceExtension.srcProject)
                     val length = localMaven.map { it.key.length }.maxOrNull() ?: 1
-                    log(
+                    logI(
                         "【${project.name}】localMaven size:${localMaven.size} ${
                             localMaven.map { it }.joinToString("\n", "\n") {
                                 val projectName = "【${it.key}】"
@@ -133,6 +130,10 @@ class ReplaceSettings() : Plugin<Settings> {
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
                     //源码依赖的project才需要
+                    if (project.repositories.isNotEmpty()) {
+                        //源码依赖，添加本地仓库
+                        project.addLocalMaven()
+                    }
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
                     project.projectToExternalModuleInDependency(replaceExtension.srcProject)
                     project.repositories.forEach {
@@ -155,7 +156,8 @@ class ReplaceSettings() : Plugin<Settings> {
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar
                 //添加【publish】任务发布aar
-                project.publishAar(buildCommand, replaceExtension.srcProject)
+                project.publishAarConfig(buildCommand, replaceExtension.srcProject)
+                //配置publishAar任务的执行时机
                 //配置发布aar任务先于preBuild
                 val publishTask = project.getPublishTask()
                 val firstBuildTask =

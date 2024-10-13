@@ -23,4 +23,5 @@ dependencies {
 //    compileOnly(replace(":feature:profile"))
 //    implementation(replace(":feature:profile"))
     implementation(project(":feature:profile"))
+    implementation(vcl.google.material)
 }

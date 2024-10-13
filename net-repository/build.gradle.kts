@@ -1,6 +1,5 @@
 plugins {
     alias(vcl.plugins.kotlin.jvm)
-    alias(wings.plugins.dev.ksp)
 }
 
 buildscript {
@@ -19,6 +18,9 @@ kotlin {
 //    }
 }
 
+dependencies {
+    kspDevDependencies()
+}
 //https://kotlinlang.org/docs/ksp-incremental.html#aggregating-vs-isolating
 
 //KSFile

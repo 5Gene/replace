@@ -16,7 +16,6 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.repositories
-import wings.DependencyReplace.projectToExternalModuleInDependency
 import wings.DependencyResolver.projectsDependencies
 import wings.GitUpdateAar.Companion.findDiffProjects
 
@@ -39,6 +38,14 @@ interface Publish : Checker {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            println(
+                """
+                
+                replace{
+                    focus(":feature:profile",":feature:media")
+                }
+            """.trimIndent().red
+            )
         }
         val map = mutableMapOf<String, String>()
         localRepoDirectory.walk().filter { it.isDirectory }.filter { it.parentFile.name == aar_group }.forEach {
@@ -91,7 +98,7 @@ interface Publish : Checker {
                 }
             }
         } else {
-            projectToExternalModuleInDependency(srcProject)
+            DependencyResolver.supplementDependencies(project, srcProject)
         }
 
         logI("${this@publishAarConfig.name} config publishAar -> ${project.displayName}")

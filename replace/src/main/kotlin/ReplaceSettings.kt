@@ -21,7 +21,6 @@ import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
-import wings.DependencyReplace.projectToExternalModuleInDependency
 import wings.DependencyResolver
 import wings.GitUpdateAar
 import wings.GitUpdateAar.Companion.replaceRootTask
@@ -135,7 +134,7 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                         project.addLocalMaven()
                     }
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
-                    project.projectToExternalModuleInDependency(replaceExtension.srcProject)
+                    DependencyResolver.supplementDependencies(project, replaceExtension.srcProject)
                     project.repositories.forEach {
                         log("afterEvaluate repositories >${project.name} ${it.name}")
                     }

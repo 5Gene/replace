@@ -14,6 +14,7 @@ var localRepoDirectory: File = File("build/aars")
 
 var showDebugLog: Boolean = false
 var showLog: Boolean = false
+var isStable = false
 
 fun log(log: String) {
     println(log)

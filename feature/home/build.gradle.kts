@@ -18,4 +18,5 @@ dependencies {
     implementation(project(":net-repository-anno"))
     implementation(project(":basic:helpers"))
     api(project(":basic:uikit"))
+    implementation(project(":feature:profile"))
 }

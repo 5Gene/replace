@@ -37,6 +37,12 @@ interface Checker {
             || this.endsWith("untimeOnly")
             || this.endsWith("ksp", true)
 
+
+    fun String.isNeedTransitiveDependency() = this.endsWith("mplementation")
+            || this.endsWith("api", true)
+            || this.endsWith("ompileOnly")
+            || this.endsWith("untimeOnly")
+
     //有些模块只有aar
     fun Project.ignoreByPlugin() = !pluginManager.hasPlugin("com.android.library")
             && !pluginManager.hasPlugin("com.android.application")

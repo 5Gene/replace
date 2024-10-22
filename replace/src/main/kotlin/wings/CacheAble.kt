@@ -16,7 +16,7 @@ object CacheAble {
         val cache = File(localRepoDirectory, ".$key")
         if (!cache.exists()) {
             cache.parentFile.mkdirs()
-            println(cache)
+            println("cache file: $cache")
             cache.createNewFile()
         }
         cache.writeText(value)

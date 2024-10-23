@@ -24,21 +24,21 @@ import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
 import org.gradle.api.initialization.resolve.RepositoriesMode
 import org.gradle.api.invocation.Gradle
-import wings.DependencyResolver
-import wings.GitUpdateAar
-import wings.GitUpdateAar.Companion.replaceRootTask
-import wings.Publish
-import wings.Publish.Local.localMaven
+import replace.DependencyResolver
+import replace.GitUpdateAar
+import replace.GitUpdateAar.Companion.replaceRootTask
+import replace.Publish
+import replace.Publish.Local.localMaven
+import replace.isStable
+import replace.localRepoDirectory
+import replace.log
+import replace.logI
+import replace.showDebugLog
+import replace.showLog
 import wings.blue
 import wings.darkGreen
-import wings.isStable
-import wings.localRepoDirectory
-import wings.log
-import wings.logI
 import wings.purple
 import wings.red
-import wings.showDebugLog
-import wings.showLog
 import wings.yellow
 
 abstract class ReplaceExtension {
@@ -57,9 +57,10 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
 //class ReplaceSettings @Inject constructor(var flowScope: FlowScope, val flowProviders: FlowProviders) : Plugin<Settings> {
 
     var buildCommand = ""
+    val dependencyResolver = DependencyResolver()
 
     override fun apply(settings: Settings) {
-        DependencyResolver.onApply(settings)
+        dependencyResolver.onApply(settings)
 //        log(flowScope)
 //        flowProviders.buildWorkResult.get()
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
@@ -97,7 +98,7 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                 showDebugLog = settings.gradle.rootProject.findProperty("replace.log.debug") == "true"
                 isStable = settings.gradle.rootProject.findProperty("replace.stable") == "true"
                 println("=========================== 📸 $showLog 📸 ===========================".purple)
-                DependencyResolver.projectCheck(gradle.rootProject)
+                dependencyResolver.projectCheck(gradle.rootProject)
             }
 
             override fun projectsEvaluated(gradle: Gradle) {
@@ -105,7 +106,7 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
             }
 
             override fun buildFinished(result: BuildResult) {
-                DependencyResolver.resolveDependencyPropagation()
+                dependencyResolver.resolveDependencyPropagation()
             }
         })
     }
@@ -149,15 +150,15 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                 }
                 val alreadyPublished = project.isAlreadyPublished()
                 if (alreadyPublished != null) {
-                    DependencyResolver.recordDependencies(project)
+                    dependencyResolver.recordDependencies(project)
                     log("afterEvaluate -> project: 【${project.name}】ignore because of -> $alreadyPublished".yellow)
                     project.repositories.forEach {
-                        log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                        logI("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
                     }
                     return
                 }
 
-                DependencyResolver.recordDependencies(project)
+                dependencyResolver.recordDependencies(project)
                 //是否是源码依赖项目
                 val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
@@ -166,18 +167,24 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
-                    DependencyResolver.supplementDependencies(project, replaceExtension.srcProject)
+                    dependencyResolver.supplementDependencies(project, replaceExtension.srcProject)
                     project.repositories.forEach {
-                        log("afterEvaluate repositories >【${project.name}】 ${it.name}")
+                        logI("afterEvaluate repositories >【${project.name}】 ${it.name}")
                     }
                     return
                 }
+
+                //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
+                //发布aar记录它api的project
+                //发布aar的模块也替换已经发布aar的依赖，这样编译也会快一点
+                dependencyResolver.supplementDependencies(project, replaceExtension.srcProject)
+
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar
                 //添加【publish】任务发布aar
-                project.publishAarConfig(buildCommand, replaceExtension.srcProject)
+                project.publishAarConfig(buildCommand)
                 project.repositories.forEach {
-                    log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                    logI("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
                 }
                 //配置publishAar任务的执行时机
                 //配置发布aar任务先于preBuild

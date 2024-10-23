@@ -1,4 +1,4 @@
-package wings
+package replace
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.DependencyConstraint
@@ -15,7 +15,9 @@ import org.gradle.api.internal.component.UsageContext
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.getByType
-import wings.GitUpdateAar.Companion.findDiffProjects
+import wings.blue
+import wings.green
+import wings.red
 
 interface Publish : Checker {
 
@@ -31,7 +33,7 @@ interface Publish : Checker {
         }
         try {
             if (srcProject.isEmpty()) {
-                srcProject.addAll(findDiffProjects())
+                srcProject.addAll(GitUpdateAar.Companion.findDiffProjects())
                 logI("collectLocalMaven: no config src projects, default by diff, src project: $srcProject".red)
             }
         } catch (e: Exception) {
@@ -48,15 +50,15 @@ interface Publish : Checker {
         val map = mutableMapOf<String, String>()
         localRepoDirectory.walk().filter { it.isDirectory }
             .filter { it.parentFile.name == aar_group }.forEach {
-            val name = it.name
-            //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
-            if (!srcProject.any { it.endsWith(":$name") }) {
-                map[name] = "$aar_group:$name:$aar_version"
-                logI("collectLocalMaven 【$name】 -> ${map[name]}")
-            } else {
-                logI("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+                val name = it.name
+                //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
+                if (!srcProject.any { it.endsWith(":$name") }) {
+                    map[name] = "$aar_group:$name:$aar_version"
+                    logI("collectLocalMaven 【$name】 -> ${map[name]}")
+                } else {
+                    logI("collectLocalMaven 【$name】 is src project -> delete:${it.deleteRecursively()}".blue)
+                }
             }
-        }
         return map
     }
 
@@ -79,15 +81,10 @@ interface Publish : Checker {
         }
     }
 
-    fun Project.publishAarConfig(buildCommand: String, srcProject: MutableList<String>) {
+    fun Project.publishAarConfig(buildCommand: String) {
         if (!pluginManager.hasPlugin("maven-publish")) {
             pluginManager.apply("maven-publish")
         }
-//        //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
-//        //发布aar记录它api的project
-//        DependencyResolver.recordDependencies(this)
-        //发布aar的模块也替换已经发布aar的依赖，这样编译也会快一点
-        DependencyResolver.supplementDependencies(project, srcProject)
 
         logI("${this@publishAarConfig.name} config publishAar -> ${project.displayName}")
         val publishingExtension = extensions.getByType<PublishingExtension>()

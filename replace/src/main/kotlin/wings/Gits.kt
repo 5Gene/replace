@@ -39,7 +39,7 @@ interface Gits {
             //不会自动将这些更新合并到本地分支，因此不会修改你的工作目录或当前分支的内容。
             "git fetch".exec()
             val originBranch = originBranch()
-            log("originBranch -> $originBranch")
+            replace.log("originBranch -> $originBranch")
             return "git diff --name-only $originBranch".exec().split("\n")
         } catch (e: Exception) {
             e.printStackTrace()

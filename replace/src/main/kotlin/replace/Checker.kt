@@ -1,4 +1,4 @@
-package wings
+package replace
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -7,7 +7,6 @@ import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.kotlin.dsl.project
-import wings.Publish.Local.localMaven
 
 interface Checker {
 
@@ -57,7 +56,7 @@ interface Checker {
         ?: (if (isRootProject()) identityPath() else null)
         ?: (if (ignoreByPlugin()) "not android and java library" else null)
 
-    fun Project.isAlreadyPublished(): String? = localMaven[project.name]
+    fun Project.isAlreadyPublished(): String? = Publish.Local.localMaven[project.name]
 }
 
 
@@ -67,14 +66,14 @@ fun Settings.include2(projectPath: String, srcProject: Boolean = false) {
         return
     }
     val name = projectPath.substring(projectPath.lastIndexOf(':') + 1)
-    localMaven[name]?.let {
+    Publish.Local.localMaven[name]?.let {
         log("replace-> $projectPath already has aar, ignore")
     } ?: include(projectPath)
 }
 
 //https://docs.gradle.org/current/userguide/dependency_verification.html
-fun DependencyHandler.replace(path: String): kotlin.Any {
+fun DependencyHandler.replace(path: String): Any {
     val name = path.substring(path.lastIndexOf(':') + 1)
-    logI("replace-> $path - $name >> $localMaven")
-    return localMaven[name] ?: project(path)
+    logI("replace-> $path - $name >> ${Publish.Local.localMaven}")
+    return Publish.Local.localMaven[name] ?: project(path)
 }

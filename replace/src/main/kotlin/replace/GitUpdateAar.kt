@@ -1,6 +1,9 @@
-package wings
+package replace
 
 import org.gradle.api.Project
+import wings.Gits
+import wings.green
+import wings.yellow
 
 interface GitUpdateAar {
 

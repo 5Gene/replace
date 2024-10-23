@@ -29,6 +29,7 @@ jobs:
       - name: 🐼 Set up JDK
         uses: actions/setup-java@v3
         with:
+          # 用生么版本编译有影响使用放的java版本，如果这里用java 18编译，那么java 17环境就无法使用
           java-version: '17'
           distribution: 'temurin'
 

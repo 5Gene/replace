@@ -16,9 +16,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
     versionCatalogs {
-        create("libs") {
-            from(files("../gradle/libs.versions.toml"))
-        }
         create("wings") {
             from(files("../gradle/wings.versions.toml"))
         }

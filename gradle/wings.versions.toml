@@ -1,45 +1,13 @@
 #https://github.com/terrakok/kmp-awesome
 
 [versions]
-cartoon = "1.0"
-cubic = "1.0"
-viewDsl = "1.0"
-adapter = "1.0"
-spark = "1.0"
-conventions = "2.1.10"
-compose = "1.7.3"
-replace = "0.0.4"
-
-auto-service = "0.0.8"
-ksp-poe = "0.0.4"
+replace = "0.1"
 
 [libraries]
-ksp-poe = { module = "io.github.5gene:ksp-poe", version.ref = "ksp-poe" }
-auto-service = { module = "io.github.5hmla:auto-service", version.ref = "auto-service" }
-
-gene-spark = { module = "io.github.5gene:spark", version.ref = "spark" }
-gene-cartoon = { module = "io.github.5gene:cartoon", version.ref = "cartoon" }
-gene-cubic = { module = "io.github.5gene:cubic", version.ref = "cubic" }
-gene-view-dsl = { module = "io.github.5gene:view-dsl", version.ref = "viewDsl" }
-gene-adapter = { module = "io.github.5gene:adapter", version.ref = "adapter" }
-
-androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
-androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
-androidx-compose-animation = { module = "androidx.compose.animation:animation", version.ref = "compose" }
-androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
-androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
-androidx-compose-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose" }
-androidx-compose-material = { module = "androidx.compose.material:material", version.ref = "compose" }
-androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose" }
 
 [bundles]
 
 [plugins]
-compose = { id = "io.github.5hmlA.android.compose", version.ref = "conventions" }
-android = { id = "io.github.5hmlA.android", version.ref = "conventions" }
-protobuf = { id = "io.github.5hmlA.protobuf", version.ref = "conventions" }
-knife = { id = "io.github.5hmlA.knife", version.ref = "conventions" }
-dev-ksp = { id = "io.github.5hmlA.dev.ksp", version.ref = "conventions" }
 
 #需要手动配置 才可以使用
 #dependencyResolutionManagement {

@@ -8,7 +8,6 @@ plugins {
     alias(vcl.plugins.compose.compiler) apply false
     alias(vcl.plugins.kotlin.jvm) apply false
     alias(vcl.plugins.ksp) apply false
-    alias(wings.plugins.dev.ksp) apply false
 }
 
 val clean by tasks.registering(Delete::class) {

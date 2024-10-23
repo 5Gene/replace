@@ -17,7 +17,6 @@ var showLog: Boolean = false
 var isStable = false
 
 fun log(log: String) {
-    println(log)
     if (showDebugLog) {
         println(log)
     }

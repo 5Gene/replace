@@ -13,6 +13,8 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+@file:Suppress("UnstableApiUsage")
+
 import org.gradle.BuildListener
 import org.gradle.BuildResult
 import org.gradle.api.Plugin
@@ -20,6 +22,7 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.initialization.Settings
+import org.gradle.api.initialization.resolve.RepositoriesMode
 import org.gradle.api.invocation.Gradle
 import wings.DependencyResolver
 import wings.GitUpdateAar
@@ -28,6 +31,7 @@ import wings.Publish
 import wings.Publish.Local.localMaven
 import wings.blue
 import wings.darkGreen
+import wings.isStable
 import wings.localRepoDirectory
 import wings.log
 import wings.logI
@@ -36,7 +40,6 @@ import wings.red
 import wings.showDebugLog
 import wings.showLog
 import wings.yellow
-import java.io.File
 
 abstract class ReplaceExtension {
     val srcProject: MutableList<String> = mutableListOf()
@@ -56,9 +59,7 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
     var buildCommand = ""
 
     override fun apply(settings: Settings) {
-        println(settings.rootDir)
-        println(File("build").absolutePath)
-        localRepoDirectory = File(settings.rootDir, "build/aars")
+        DependencyResolver.onApply(settings)
 //        log(flowScope)
 //        flowProviders.buildWorkResult.get()
         val replaceExtension = settings.extensions.create("replace", ReplaceExtension::class.java)
@@ -77,21 +78,34 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
         projectEvaluationListener(settings, replaceExtension)
         settings.gradle.addBuildListener(object : BuildListener {
             override fun settingsEvaluated(settings: Settings) {
+                try {
+                    val dependencyResolutionManagement = settings.dependencyResolutionManagement
+                    val repositoriesMode = dependencyResolutionManagement.repositoriesMode.get()
+                    logI("settingsEvaluated -> Repositories Mode: $repositoriesMode")
+                    if (repositoriesMode == RepositoriesMode.PREFER_SETTINGS) {
+                        dependencyResolutionManagement.repositories.addLocalMaven()
+                        dependencyResolutionManagement.repositories.forEach {
+                            logI("settingsEvaluated -> repo: ${it.name}")
+                        }
+                    }
+                } catch (e: Exception) {
+                }
             }
 
             override fun projectsLoaded(gradle: Gradle) {
                 showLog = settings.gradle.rootProject.findProperty("replace.log") == "true"
                 showDebugLog = settings.gradle.rootProject.findProperty("replace.log.debug") == "true"
+                isStable = settings.gradle.rootProject.findProperty("replace.stable") == "true"
                 println("=========================== 📸 $showLog 📸 ===========================".purple)
+                DependencyResolver.projectCheck(gradle.rootProject)
             }
 
             override fun projectsEvaluated(gradle: Gradle) {
+
             }
 
             override fun buildFinished(result: BuildResult) {
-                if (localMaven.isEmpty()) {
-                    DependencyResolver.resolveDependencyPropagation(settings.gradle.rootProject)
-                }
+                DependencyResolver.resolveDependencyPropagation()
             }
         })
     }
@@ -121,6 +135,29 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
             }
 
             override fun afterEvaluate(project: Project, state: ProjectState) {
+                if (project.name.startsWith("0_")) {
+                    log("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
+                    return
+                }
+                val ignoreReplace = project.ignoreReplace()
+                if (ignoreReplace != null) {
+                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
+                    project.repositories.forEach {
+                        log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                    }
+                    return
+                }
+                val alreadyPublished = project.isAlreadyPublished()
+                if (alreadyPublished != null) {
+                    DependencyResolver.recordDependencies(project)
+                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $alreadyPublished".yellow)
+                    project.repositories.forEach {
+                        log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                    }
+                    return
+                }
+
+                DependencyResolver.recordDependencies(project)
                 //是否是源码依赖项目
                 val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
@@ -128,34 +165,20 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                 log("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
-                    //源码依赖的project才需要
-                    if (project.repositories.isNotEmpty()) {
-                        //源码依赖，添加本地仓库
-                        project.addLocalMaven()
-                    }
                     //找到所有本地project依赖，根据需要替换为远端aar依赖
                     DependencyResolver.supplementDependencies(project, replaceExtension.srcProject)
                     project.repositories.forEach {
-                        log("afterEvaluate repositories >${project.name} ${it.name}")
+                        log("afterEvaluate repositories >【${project.name}】 ${it.name}")
                     }
-                    return
-                }
-                val ignoreReplace = project.ignoreReplace()
-                if (ignoreReplace != null) {
-                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
-                    project.repositories.forEach {
-                        log("afterEvaluate repositories >${project.name} ${it.name}".yellow)
-                    }
-                    return
-                }
-                if (project.name.startsWith("0_")) {
-                    log("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
                     return
                 }
                 //https://docs.gradle.org/current/userguide/declaring_dependencies.html
                 //不是源码依赖, 那么需要配置任务发布aar
                 //添加【publish】任务发布aar
                 project.publishAarConfig(buildCommand, replaceExtension.srcProject)
+                project.repositories.forEach {
+                    log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                }
                 //配置publishAar任务的执行时机
                 //配置发布aar任务先于preBuild
                 val publishTask = project.getPublishTask()

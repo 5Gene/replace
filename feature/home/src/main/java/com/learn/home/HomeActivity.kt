@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.bumptech.glide.Glide
+import com.example.lib.LibClass
 import com.learn.home.ui.theme.ReplaceTheme
 import com.learn.uikit.UtilFromUikit
 
@@ -19,6 +20,7 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        LibClass.libTest()
         UtilFromUikit.testUikit()
         Glide.with(this)
             .load("url")

@@ -5,18 +5,16 @@ import org.gradle.api.artifacts.DependencyConstraint
 import org.gradle.api.artifacts.ExcludeRule
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.artifacts.PublishArtifact
+import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.capabilities.Capability
 import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
-import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.internal.component.UsageContext
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.repositories
-import wings.DependencyResolver.projectsDependencies
 import wings.GitUpdateAar.Companion.findDiffProjects
 
 interface Publish : Checker {
@@ -48,7 +46,8 @@ interface Publish : Checker {
             )
         }
         val map = mutableMapOf<String, String>()
-        localRepoDirectory.walk().filter { it.isDirectory }.filter { it.parentFile.name == aar_group }.forEach {
+        localRepoDirectory.walk().filter { it.isDirectory }
+            .filter { it.parentFile.name == aar_group }.forEach {
             val name = it.name
             //这里可以执行下git语句比较下哪些模块有改动，有的话就忽略，让其重新发布aar
             if (!srcProject.any { it.endsWith(":$name") }) {
@@ -62,18 +61,20 @@ interface Publish : Checker {
     }
 
     fun Project.addLocalMaven() {
-        if (repositories.findByName("aar") != null) {
+        repositories.addLocalMaven()
+    }
+
+    fun RepositoryHandler.addLocalMaven() {
+        if (findByName("aar") != null) {
             return
         }
-        repositories {
-            //限定只允许本地依赖group为aar_group的依赖访问此仓库，其他不允许访问
-            maven {
-                name = "aar"
-                setUrl(localRepoDirectory.path)
-                content {
-                    //https://blog.csdn.net/jklwan/article/details/99351808
-                    includeGroup(aar_group)
-                }
+        //限定只允许本地依赖group为aar_group的依赖访问此仓库，其他不允许访问
+        maven {
+            name = "aar"
+            setUrl(localRepoDirectory.path)
+            content {
+                //https://blog.csdn.net/jklwan/article/details/99351808
+                includeGroup(aar_group)
             }
         }
     }
@@ -82,24 +83,11 @@ interface Publish : Checker {
         if (!pluginManager.hasPlugin("maven-publish")) {
             pluginManager.apply("maven-publish")
         }
-        val projectName = name
-        if (localMaven.isEmpty()) {
-            //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
-            //发布aar记录它api的project
-            DependencyResolver.recordDependencies(this)
-            val configProjectDeps = projectsDependencies.getOrPut(projectName) { mutableMapOf() }
-            configurations.filter { it.name.isNormalDependency() }.forEach {
-                val configName = it.name
-                it.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { dependency ->
-                    //project模块只有aar也在这,不好判断
-                    val dependProjects = configProjectDeps.getOrPut(configName) { mutableSetOf() }
-                    dependProjects.add(dependency.name)
-                    log("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${projectsDependencies[projectName]}".blue)
-                }
-            }
-        } else {
-            DependencyResolver.supplementDependencies(project, srcProject)
-        }
+//        //发布aar之后，api的本地依赖不存在了，需要记录，源码模块依赖此aar的时候要补充
+//        //发布aar记录它api的project
+//        DependencyResolver.recordDependencies(this)
+        //发布aar的模块也替换已经发布aar的依赖，这样编译也会快一点
+        DependencyResolver.supplementDependencies(project, srcProject)
 
         logI("${this@publishAarConfig.name} config publishAar -> ${project.displayName}")
         val publishingExtension = extensions.getByType<PublishingExtension>()
@@ -175,7 +163,8 @@ interface Publish : Checker {
         override fun getUsage() = usages.usage
     }
 
-    private class NoProjectDependencySoftwareComponentContainer(val component: SoftwareComponentInternal) : SoftwareComponentInternal {
+    private class NoProjectDependencySoftwareComponentContainer(val component: SoftwareComponentInternal) :
+        SoftwareComponentInternal {
 
         override fun getName() = component.name
 

@@ -11,10 +11,6 @@ import wings.Publish.Local.localMaven
 
 interface Checker {
 
-    companion object {
-        val kspProjects = mutableSetOf<String>()
-    }
-
     fun DefaultProjectDependency.findIdentityPath(): String {
         return (dependencyProject as ProjectInternal).identityPath.toString()
     }
@@ -43,6 +39,14 @@ interface Checker {
             || this.endsWith("ompileOnly")
             || this.endsWith("untimeOnly")
 
+
+    infix fun String.canTransitive(other: String): Boolean {
+        val type = other.removeSuffix("Api")
+//      "debugApi".removeSuffix("Api") => debug
+//      "api".removeSuffix("Api")  => api
+        return type == "api" || this.startsWith(type)
+    }
+
     //有些模块只有aar
     fun Project.ignoreByPlugin() = !pluginManager.hasPlugin("com.android.library")
             && !pluginManager.hasPlugin("com.android.application")
@@ -50,10 +54,10 @@ interface Checker {
             && !pluginManager.hasPlugin("org.jetbrains.kotlin.jvm")
 
     fun Project.ignoreReplace(): String? = (if (childProjects.isNotEmpty()) "father project" else null)
-        ?: localMaven[project.name]
         ?: (if (isRootProject()) identityPath() else null)
-        ?: (if (ignoreByPlugin() && !isKspCompilerModel()) "not android and java library" else null)
+        ?: (if (ignoreByPlugin()) "not android and java library" else null)
 
+    fun Project.isAlreadyPublished(): String? = localMaven[project.name]
 }
 
 

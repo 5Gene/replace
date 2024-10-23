@@ -16,28 +16,23 @@ plugins {
     id("io.github.5hmlA.replace")
 }
 
+replace {
+//    focus(":basic:uikit", ":feature:home")
+    focus(":lib")
+}
+
 dependencyResolutionManagement {
     versionCatalogs {
         create("wings") {
             from(files("gradle/wings.versions.toml"))
         }
     }
-    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
     }
 }
-
-//replace {
-////    focus(
-//////        ":feature:home",
-////        ":feature:profile",
-////        ":net-repository",
-////        ":kt",
-//////        ":basic:uikit"
-////    )
-//}
 
 include(":app")
 include(":basic:helpers")
@@ -48,5 +43,4 @@ include(":feature:profile")
 include(":kt")
 include(":net-repository-anno")
 include(":net-repository")
-//include(":feature:0_middle")
 include(":lib")

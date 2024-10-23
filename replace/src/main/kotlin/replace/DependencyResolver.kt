@@ -305,21 +305,18 @@ class DependencyResolver : Publish {
     }
 
     fun projectCheck(rootProject: Project) {
-        try {
-            rootProject.allprojects.forEachIndexed { index, it ->
+        rootProject.allprojects.forEachIndexed { index, it ->
+            if (it.childProjects.isEmpty()) {
                 val projectName = it.name
                 val identityPath = it.identityPath()
+                log("projectCheck $projectName $identityPath")
                 //rootProject的identityPath为:
-                if (identityPath.length > 1) {
-                    if (allProjects[projectName] != null) {
-                        throw RuntimeException("$index/${rootProject.allprojects.size} 不支持重复的模块名称:【$projectName】【${identityPath}】 $allProjects")
-                    }
-                    allProjects[projectName] = identityPath
+                if (allProjects[projectName] != null) {
+                    throw RuntimeException("$index/${rootProject.allprojects.size} 不支持重复的模块名称:【$projectName】【${identityPath}】 $allProjects")
                 }
+                allProjects[projectName] = identityPath
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
 
+        }
     }
 }

@@ -73,6 +73,10 @@ class DependencyResolver : Publish {
             log("supplementDependencies -> project(${project.identityPath()}) No LocalMaven aar files, so current maybe the first Build".green)
             return
         }
+        if (projectsDependencies.isEmpty()) {
+            log("supplementDependencies -> project(${project.identityPath()}) projectsDependencies, so current maybe the first Build".green)
+            return
+        }
         //替换aar依赖需要添加本地仓库
         project.addLocalMaven()
         val projectName = project.name
@@ -241,7 +245,7 @@ class DependencyResolver : Publish {
      * 解析出各个模块之间依赖关系传递与补充
      */
     fun resolveDependencyPropagation() {
-        if (isStable && projectsDependencies.isEmpty()) {
+        if (isStable && projectRecordDependencies.isEmpty()) {
             return
         }
         val cost = measureTimeMillis {
@@ -249,7 +253,7 @@ class DependencyResolver : Publish {
             CacheAble.cache(KEY_CACHE, resolveExtendDependencies)
             resolveExtendDependencies.log()
         }
-        log("resolveDependencyPropagation => cost time: $cost ms".red)
+        logI("resolveDependencyPropagation => cost time: $cost ms".red)
     }
 
     private fun resolveExtendDependencies(

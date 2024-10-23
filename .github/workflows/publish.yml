@@ -26,10 +26,10 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      - name: 🐼 Set up JDK 18
+      - name: 🐼 Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '18'
+          java-version: '17'
           distribution: 'temurin'
 
       # Runs a single command using the runners shell

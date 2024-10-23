@@ -139,21 +139,21 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
 
             override fun afterEvaluate(project: Project, state: ProjectState) {
                 if (project.name.startsWith("0_")) {
-                    log("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
+                    logI("afterEvaluate -> project: 【${project.name}】force ignore, because startWith 【0_】".red)
                     return
                 }
                 val ignoreReplace = project.ignoreReplace()
                 if (ignoreReplace != null) {
-                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
+                    logI("afterEvaluate -> project: 【${project.name}】ignore because of -> $ignoreReplace".yellow)
                     project.repositories.forEach {
-                        log("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
+                        logI("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
                     }
                     return
                 }
                 val alreadyPublished = project.isAlreadyPublished()
                 if (alreadyPublished != null) {
                     dependencyResolver.recordDependencies(project)
-                    log("afterEvaluate -> project: 【${project.name}】ignore because of -> $alreadyPublished".yellow)
+                    logI("afterEvaluate -> project: 【${project.name}】ignore because of -> $alreadyPublished".yellow)
                     project.repositories.forEach {
                         logI("afterEvaluate repositories >【${project.name}】 ${it.name}".yellow)
                     }
@@ -164,8 +164,8 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                 //是否是源码依赖项目
                 val identityPath = project.identityPath()
                 val isSrcProject = replaceExtension.srcProject.contains(identityPath)
-                log("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ".darkGreen)
-                log("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
+                logI("afterEvaluate -> srcProjects: ${replaceExtension.srcProject} ".darkGreen)
+                logI("afterEvaluate -> project: 【${project.name}】isSrcProject: $isSrcProject".darkGreen)
                 //源码依赖项目或者app项目优先处理，因为可能出现切换其他已经发布的模块到源码依赖
                 if (isSrcProject || project.isAndroidApplication()) {
                     //找到所有本地project依赖，根据需要替换为远端aar依赖

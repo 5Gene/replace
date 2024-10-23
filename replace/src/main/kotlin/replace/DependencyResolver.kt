@@ -312,7 +312,7 @@ class DependencyResolver : Publish {
                 //rootProject的identityPath为:
                 if (identityPath.length > 1) {
                     if (allProjects[projectName] != null) {
-                        throw RuntimeException("不支持重复的模块名称:【$projectName】 $allProjects")
+                        throw RuntimeException("不支持重复的模块名称:【$projectName】【${identityPath}】 $allProjects")
                     }
                     allProjects[projectName] = identityPath
                 }

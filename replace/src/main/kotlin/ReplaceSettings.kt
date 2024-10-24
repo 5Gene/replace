@@ -129,10 +129,6 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
                         }".yellow
                     )
                 } else if (localMaven.isNotEmpty()) {
-                    //替换aar依赖需要添加本地仓库, 只有aar会访问此仓库
-                    //把aar仓库添加到第一个仓库，只有aar才会访问其他依赖不会，提高依赖下载速度
-                    project.addLocalMaven()
-
                     if (localMaven.keys.contains(project.name)) {
                         val remove = project.rootProject.subprojects.remove(project)
                         log("beforeEvaluate -> remove ${project}: $remove".yellow)

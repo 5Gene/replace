@@ -64,8 +64,8 @@ class DependencyResolver : Publish {
 
     fun onApply(settings: Settings) {
         allProjects.clear()
-        println(settings.rootDir)
-        println(File("build").absolutePath)
+        log(settings.rootDir.toString())
+        log(File("build").absolutePath)
         localRepoDirectory = File(settings.rootDir, "build/aars")
     }
 
@@ -81,6 +81,10 @@ class DependencyResolver : Publish {
             log("supplementDependencies -> project(${project.identityPath()}) projectsDependencies, so current maybe the first Build".green)
             return
         }
+
+        //替换aar依赖需要添加本地仓库, 只有aar会访问此仓库
+        //把aar仓库添加到第一个仓库，只有aar才会访问其他依赖不会，提高依赖下载速度
+        project.addLocalMaven()
 
         val usedDependencies = Transfer.get().transitiveDependencies(
             project, srcProjectIdentityPaths,

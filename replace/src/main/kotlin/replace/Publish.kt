@@ -24,6 +24,7 @@ interface Publish : Checker {
     companion object Local {
         const val aar_group = "aar"
         const val aar_version = "dev"
+        const val aar_maven_name = "aars_dev"
         var localMaven: Map<String, String> = mapOf()
     }
 
@@ -69,17 +70,28 @@ interface Publish : Checker {
     }
 
     fun RepositoryHandler.addLocalMaven() {
-        if (findByName("aar") != null) {
+        if (isNotEmpty() && first().name == aar_maven_name) {
             return
         }
-        //限定只允许本地依赖group为aar_group的依赖访问此仓库，其他不允许访问
+
+        //把aars仓库添加到第一个位置
+        //先默认添加到最后
+        //然后移除最后一个返回ArtifactRepository实例
+        //然后添加aars的ArtifactRepository实例到第一个位置
         maven {
-            name = "aar"
+            name = aar_maven_name
             setUrl(localRepoDirectory.path)
             content {
+                //限定只允许本地依赖group为aar_group的依赖访问此仓库，其他不允许访问
                 //https://blog.csdn.net/jklwan/article/details/99351808
                 includeGroup(aar_group)
             }
+        }
+        //拿到所有仓库
+        //val repositories = this.toList()
+        if (size > 1) {
+            val repository = removeLast()
+            addFirst(repository)
         }
     }
 

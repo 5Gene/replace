@@ -81,8 +81,6 @@ class DependencyResolver : Publish {
             log("supplementDependencies -> project(${project.identityPath()}) projectsDependencies, so current maybe the first Build".green)
             return
         }
-        //替换aar依赖需要添加本地仓库
-        project.addLocalMaven()
 
         val usedDependencies = Transfer.get().transitiveDependencies(
             project, srcProjectIdentityPaths,

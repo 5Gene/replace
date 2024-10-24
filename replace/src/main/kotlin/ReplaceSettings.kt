@@ -102,12 +102,12 @@ class ReplaceSettings() : Plugin<Settings>, Publish, GitUpdateAar {
             }
 
             override fun projectsEvaluated(gradle: Gradle) {
-                logI("【${gradle.rootProject.name}】 =======================>>>>>  projectsEvaluated")
+                logI("【${gradle.rootProject.name}】------------------------------------->>>>> projectsEvaluated")
                 dependencyResolver.resolveDependencyPropagation()
             }
 
             override fun buildFinished(result: BuildResult) {
-                logI("buildFinished ------------------------------------->>>>>  【${result.action}】")
+                logI("buildFinished ------------------------------------->>>>>【${result.action}】")
             }
 
         })

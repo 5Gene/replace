@@ -1,6 +1,7 @@
 package replace
 
 import org.gradle.api.Project
+import replace.TransferOnEach.identityPath2Name
 import wings.Gits
 import wings.green
 import wings.yellow
@@ -47,7 +48,7 @@ interface GitUpdateAar {
                 group = "replace update"
                 doLast {
                     val diffProjects = findDiffProjects().map {
-                        it.substring(it.lastIndexOf(":") + 1)
+                        it.identityPath2Name()
                     }.toMutableList()
                     localRepoDirectory.walk().filter {
                         it.isDirectory && diffProjects.remove(it.name)

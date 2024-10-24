@@ -7,12 +7,15 @@ import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.kotlin.dsl.project
+import replace.TransferOnEach.identityPath2Name
 
 interface Checker {
 
     fun DefaultProjectDependency.findIdentityPath(): String {
         return (dependencyProject as ProjectInternal).identityPath.toString()
     }
+
+    fun String.identityPath2Name() = substring(lastIndexOf(":") + 1)
 
     fun Project.identityPath() = (this as DefaultProject).identityPath.toString()
 
@@ -32,6 +35,9 @@ interface Checker {
             || this.endsWith("untimeOnly")
             || this.endsWith("ksp", true)
 
+    fun String.configIgnore() = startsWith("androidTest")
+            || startsWith("testFixtures")
+
 
     fun String.isNeedTransitiveDependency() = this.endsWith("mplementation")
             || this.endsWith("api", true)
@@ -44,6 +50,13 @@ interface Checker {
 //      "debugApi".removeSuffix("Api") => debug
 //      "api".removeSuffix("Api")  => api
         return type == "api" || this.startsWith(type)
+    }
+
+
+    fun String.hasBuildType(): Boolean {
+        //".*(Api|CompileOnly|RuntimeOnly|Implementation)".toRegex().matches("debugApi")
+        //直接使用字符串的 endsWith 方法，会逐一检查每一个可能的后缀。虽然代码看起来冗长但对于这类简单匹配，它通常比正则表达式更高效，因为字符串的 endsWith 方法在内部实现较为简单，不涉及复杂的模式解析。
+        return endsWith("Api") || endsWith("CompileOnly") || endsWith("RuntimeOnly") || endsWith("Implementation")
     }
 
     //有些模块只有aar
@@ -65,7 +78,7 @@ fun Settings.include2(projectPath: String, srcProject: Boolean = false) {
         include(projectPath)
         return
     }
-    val name = projectPath.substring(projectPath.lastIndexOf(':') + 1)
+    val name = projectPath.identityPath2Name()
     Publish.Local.localMaven[name]?.let {
         log("replace-> $projectPath already has aar, ignore")
     } ?: include(projectPath)
@@ -73,7 +86,7 @@ fun Settings.include2(projectPath: String, srcProject: Boolean = false) {
 
 //https://docs.gradle.org/current/userguide/dependency_verification.html
 fun DependencyHandler.replace(path: String): Any {
-    val name = path.substring(path.lastIndexOf(':') + 1)
+    val name = path.identityPath2Name()
     logI("replace-> $path - $name >> ${Publish.Local.localMaven}")
     return Publish.Local.localMaven[name] ?: project(path)
 }

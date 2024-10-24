@@ -27,6 +27,8 @@ interface Publish : Checker {
         var localMaven: Map<String, String> = mapOf()
     }
 
+    fun String.nameToAarDependencyNotation() = "${aar_group}:${this}:$aar_version"
+
     fun Project.collectLocalMaven(srcProject: MutableList<String>): Map<String, String> {
         if (!isRootProject()) {
             throw RuntimeException("not root project")

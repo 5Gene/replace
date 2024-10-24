@@ -6,14 +6,13 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.kotlin.dsl.project
 import wings.blue
-import wings.darkGreen
 import wings.green
 import wings.purple
 import wings.red
-import wings.yellow
 import java.io.File
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.concurrent.thread
 import kotlin.system.measureTimeMillis
 
 class DependencyResolver : Publish {
@@ -29,11 +28,15 @@ class DependencyResolver : Publish {
         logI("==".repeat(50).purple)
     }
 
-    private val projectRecordDependencies: MutableMap<String, MutableMap<String, MutableSet<String>>> =
-        mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
+    private val projectRecordDependencies: MutableMap<String, MutableMap<String, MutableSet<String>>> = mutableMapOf()
+
+    /**
+     * 所有涉及到的依赖类型,buildTypeApi? api? debugApi?, 解析依赖的时候只要关注用到的configuration配置依赖关系就行
+     */
+    private val allConfiguredDependencies: MutableSet<String> = mutableSetOf()
 
     //project[key]通过api传递哪些project[value]
-    val projectsDependencies: MutableMap<String, MutableMap<String, MutableSet<String>>> by lazy {
+    private val projectsDependencies: Map<String, MutableMap<String, MutableSet<String>>> by lazy {
         val cache = CacheAble.readCache(KEY_CACHE)
         val dependencyMap = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
         if (cache.isNotEmpty()) {
@@ -41,6 +44,7 @@ class DependencyResolver : Publish {
             map.forEach { (p, v) ->
                 val configDeps = mutableMapOf<String, MutableSet<String>>()
                 v.forEach { (config, list) ->
+                    allConfiguredDependencies.add(config)
                     if (config.endsWith("ksp", true)) {
                         kspProjectNames.addAll(list)
                     }
@@ -68,8 +72,8 @@ class DependencyResolver : Publish {
     /**
      * 给模块补充传递的依赖关系
      */
-    fun supplementDependencies(project: Project, srcProjects: List<String>) {
-        if (Publish.Local.localMaven.isEmpty()) {
+    fun supplementDependencies(project: Project, srcProjectIdentityPaths: List<String>) {
+        if (Publish.localMaven.isEmpty()) {
             log("supplementDependencies -> project(${project.identityPath()}) No LocalMaven aar files, so current maybe the first Build".green)
             return
         }
@@ -79,67 +83,34 @@ class DependencyResolver : Publish {
         }
         //替换aar依赖需要添加本地仓库
         project.addLocalMaven()
-        val projectName = project.name
-        //已经用掉了哪些src模块，剩下的要补充到app模块
-        val srcProjectDepends = srcProjects.toMutableSet()
-        //通过aar替换了哪些模块，剩下的要补充到app模块,用了就删防止重复依赖
-        val localMavenDepends = Publish.Local.localMaven.toMutableMap()
-        project.configurations.forEach { config ->
-            val configName = config.name
-            val configTag = "【$projectName】> $configName > supplementDependencies >>"
-            log("$configTag configurations-> ${config.name} ---------------->>>>")
-            //找到所有依赖的模块，替换为aar依赖或者不变(如果配置的是src依赖的话)
-            config.dependencies.filterIsInstance<DefaultProjectDependency>().forEach { projectDependency ->
-                //project依赖的本地项目替换为LocalMaven的aar,如果是源码依赖则不变
-                //DefaultProjectDependency
-                val isSrcDepend = srcProjectDepends.removeIf { it == projectDependency.findIdentityPath() }
-                if (isSrcDepend) {
-                    log("$configTag $configName(project(${projectDependency.findIdentityPath()})) is src project".blue)
-                } else {
-                    //非源码模块，则映射为LocalMaven的aar依赖，并按需传递子集依赖到此模块
-                    val dependenceProjectName = projectDependency.name
-                    Publish.Local.localMaven[dependenceProjectName]?.let { aar ->
-                        //本地项目在LocalMaven中存在则替换为aar的LocalMaven
-                        //存在aar依赖才需要移除project依赖
-                        config.dependencies.remove(projectDependency)
-                        val remove = localMavenDepends.remove(dependenceProjectName)
-                        if (remove != null) {
-                            //添加对应的aar依赖
-                            project.dependencies.add(configName, aar)
-                            logI("$configTag $configName($aar) to $projectName".blue)
-                            //补充这个模块所传递的依赖
-                            //根据依赖类型处理需要传递的依赖
-                            transitiveDependencies(
-                                configName,
-                                dependenceProjectName,
-                                configTag,
-                                localMavenDepends,
-                                projectName,
-                                project,
-                                srcProjectDepends,
-                                srcProjects,
-                            )
-                        } else {
-                            //已经以来过,且不是源码依赖
-                            log("$configTag $configName($aar) to $projectName but already".blue)
-                        }
-                    } ?: run {
-                        logI("$configTag $configName(project(${projectDependency.findIdentityPath()})) no aar".blue)
-                    }
-                }
-            }
-        }
+
+        val usedDependencies = Transfer.get().transitiveDependencies(
+            project, srcProjectIdentityPaths,
+            allProjects, projectsDependencies,
+            allConfiguredDependencies
+        )
 
         if (project.isAndroidApplication()) {
-            srcProjectDepends.forEach { srcProject ->
-                val isKsp = kspProjectNames.any { ksp -> srcProject.endsWith(ksp) }
+            log("isAndroidApplication all usedDependencies: $usedDependencies")
+            val leftSrcProjectDepends = srcProjectIdentityPaths.filterNot {
+                usedDependencies.contains(it.identityPath2Name())
+            }
+            val leftLocalMavenDepends = Publish.localMaven.filterNot {
+                usedDependencies.contains(it.key)
+            }
+
+            val projectName = project.name
+            leftSrcProjectDepends.forEach { srcProject ->
+                // srcProject => :basic:home
+                // srcProject => :net-repository
+                val isKsp = kspProjectNames.any { name -> srcProject.endsWith(name) }
                 if (isKsp) {
-                    log("【${srcProject}】 -> replenish ignore ksp project 【${srcProject}】".green)
+                    log("【${srcProject}】 -> replenish ignore ksp project 【${srcProject}】")
                 } else {
                     try {
                         if (project.identityPath() != srcProject) {
                             project.dependencies.add("runtimeOnly", project.dependencies.project(srcProject))
-                            logI("【$projectName】 -> replenish src project > runtimeOnly(${srcProject}) for $srcProject".green)
+                            logI("【$projectName】 -> replenish src project > runtimeOnly(${srcProject}) for $projectName".blue)
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -147,113 +118,32 @@ class DependencyResolver : Publish {
                 }
             }
 
-            localMavenDepends.values.forEach { aar ->
-                logI("【$projectName】> replenish aar > runtimeOnly(${aar}) for $projectName".blue)
-                project.dependencies.add("runtimeOnly", aar)
-            }
-        }
-    }
-
-    private fun transitiveDependencies(
-        configName: String,
-        dependenceProjectName: String,
-        configTag: String,
-        localMavenDepends: MutableMap<String, String>,
-        projectName: String?,
-        project: Project,
-        srcProjectDepends: MutableSet<String>,
-        srcProjects: List<String>
-    ) {
-        //依赖类型需要判断传递
-        if (configName.isNeedTransitiveDependency()) {
-            val configDepends = projectsDependencies[dependenceProjectName]
-            if (configDepends != null) {
-                //找到dependenceProjectName的依赖关系，需要传递的只有api类的依赖
-                log("$configTag $configName($dependenceProjectName) has configDepends $configDepends".darkGreen)
-                val transitiveDependencies = configDepends
-                    //需要传递的只有api类的依赖
-                    .filter { it.key.endsWith("api", true) }
-                    //找到对应type的依赖
-                    .filter { configName canTransitive it.key }
-                    .values.flatten().toSet()
-                if (transitiveDependencies.isNotEmpty()) {
-                    //找到同依赖类型的dependenceProjectName的指定类型依赖关系
-                    log("$configTag $configName transitive -> $transitiveDependencies from $dependenceProjectName".darkGreen)
-                    transitiveDependencies.forEach { transitiveProjectName ->
-                        transitiveDependien(
-                            transitiveProjectName,
-                            srcProjects,
-                            srcProjectDepends,
-                            project,
-                            configName,
-                            configTag,
-                            projectName,
-                            localMavenDepends,
-                            dependenceProjectName
-                        )
-                    }
+            leftLocalMavenDepends.forEach { aarName, aarDependencyNotation ->
+                val isKsp = kspProjectNames.any { name -> aarName == name }
+                if (!isKsp) {
+                    logI("【$projectName】> replenish aar > runtimeOnly(${aarDependencyNotation}) for $projectName".blue)
+                    project.dependencies.add("runtimeOnly", aarDependencyNotation)
                 }
             }
         }
     }
 
-    /**
-     * 添加传递的依赖
-     * - 如果是已经是maven发布了的aar，那么添加aar依赖如果没添加过
-     * - 如果是src模块那么添加src模块依赖
-     * - 如果是被删除的aar依赖，那么添加源码模块参与编译
-     */
-    private fun transitiveDependien(
-        transitiveProjectName: String,
-        srcProjects: List<String>,
-        srcProjectDepends: MutableSet<String>,
-        project: Project,
-        configName: String,
-        configTag: String,
-        projectName: String?,
-        localMavenDepends: MutableMap<String, String>,
-        dependenceProjectName: String
-    ) {
-        if (Publish.Local.localMaven[transitiveProjectName] == null) {
-            //不是aar的时候,判断传递的依赖模块是否是src
-            val identityPath = allProjects[transitiveProjectName]!!
-            if (srcProjects.contains(identityPath)) {
-                //是srcProject
-                srcProjectDepends.find { it.endsWith(transitiveProjectName) }?.let { src ->
-                    srcProjectDepends.remove(src)
-                    project.dependencies.add(configName, project.dependencies.project(src))
-                    logI("$configTag transitive src project -> $configName(${src}) from $dependenceProjectName to $projectName".green)
-                }
-            } else {
-                //如果不是src也不是aar那么就是aar被删了
-                project.dependencies.add(configName, project.dependencies.project(identityPath))
-                logI("$configTag transitive deleted aar project -> $configName(${identityPath}) from $dependenceProjectName to $projectName".red)
-            }
-        } else {
-            val transitiveAar = localMavenDepends.remove(transitiveProjectName)
-            if (transitiveAar != null) {
-                //找到了对应的aar依赖,且没添加过此依赖
-                logI("$configTag transitive -> $configName($transitiveAar) from $dependenceProjectName to $projectName".green)
-                project.dependencies.add(configName, transitiveAar)
-            } else {
-                log("$configTag $configName transitive -> $transitiveProjectName from $dependenceProjectName but already".yellow)
-            }
-        }
-    }
 
     /**
-     * 解析出各个模块之间依赖关系传递与补充
+     * 解析出各个模块之间依赖关系传递与补充,并缓存起来
      */
     fun resolveDependencyPropagation() {
         if (isStable && projectRecordDependencies.isEmpty()) {
             return
         }
-        val cost = measureTimeMillis {
-            val resolveExtendDependencies = resolveExtendDependencies(projectRecordDependencies)
-            CacheAble.cache(KEY_CACHE, resolveExtendDependencies)
-            resolveExtendDependencies.log()
+        thread {
+            val cost = measureTimeMillis {
+                val resolveExtendDependencies = resolveExtendDependencies(projectRecordDependencies)
+                CacheAble.cache(KEY_CACHE, resolveExtendDependencies)
+                resolveExtendDependencies.log()
+            }
+            logI("resolveDependencyPropagation => cost time: $cost ms".red)
         }
-        logI("resolveDependencyPropagation => cost time: $cost ms".red)
     }
 
     private fun resolveExtendDependencies(
@@ -303,7 +193,7 @@ class DependencyResolver : Publish {
                 //project模块只有aar也在这,不好判断
                 val dependProjects = dependencies.getOrPut(configName) { mutableSetOf() }
                 dependProjects.add(dependency.name)
-                log("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${project.identityPath()}".blue)
+                log("【$projectName】find projectDependency $configName(project(${dependency.findIdentityPath()})) -> ${project.identityPath()}")
             }
         }
     }

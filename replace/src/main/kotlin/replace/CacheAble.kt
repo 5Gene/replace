@@ -1,7 +1,6 @@
 package replace
 
 import groovy.json.JsonOutput
-import wings.yellow
 import java.io.File
 
 object CacheAble {
@@ -17,21 +16,21 @@ object CacheAble {
         val cache = File(localRepoDirectory, ".$key")
         if (!cache.exists()) {
             cache.parentFile.mkdirs()
-            println("cache file: $cache")
+            log("cache file: $cache >> cache $key -> $value")
             cache.createNewFile()
         }
         cache.writeText(value)
-        log("cache $key -> $value".yellow)
+        log("cache $key -> $value")
     }
 
     fun readCache(key: String, def: String = ""): String {
         val cache = File(localRepoDirectory, ".$key")
         if (cache.exists()) {
             val readText = cache.readText()
-            log("read cache $key -> $readText".yellow)
+            log("read cache $key -> $readText")
             return readText
         }
-        log("read cache $key -> default: $def".yellow)
+        log("read cache $key -> default: $def")
         return def
     }
 }
